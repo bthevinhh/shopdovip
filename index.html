@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kho Của Bạn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #131019;
+    --ink-2: #1B1626;
+    --crate: #1E1929;
+    --crate-line: #34293E;
+    --kraft: #F3E9D8;
+    --kraft-dark: #E4D2B3;
+    --amber: #F0A93C;
+    --amber-soft: #F6C878;
+    --stamp: #E85C41;
+    --violet: #7C6CF0;
+    --text-dark: #2A2118;
+    --text-light: #F5F1FA;
+    --muted: #9C93B0;
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box;}
+  ::selection{background:var(--amber);color:var(--text-dark);}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, #2A2140 0%, transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, #24304A 0%, transparent 55%),
+      var(--ink);
+    color:var(--text-light);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  .label{
+    font-family:'Space Mono',monospace;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--amber);
+    font-weight:700;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces',serif;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  button{font-family:inherit;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;top:0;z-index:30;
+    padding:22px 32px;
+    background:rgba(19,16,25,.72);
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid rgba(255,255,255,.07);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .brand-title{
+    font-size:clamp(24px,3.4vw,32px);
+    font-weight:600;
+    color:var(--text-light);
+    display:flex;align-items:center;gap:10px;
+  }
+  .brand-title::before{
+    content:'';
+    width:9px;height:9px;border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 0 4px rgba(240,169,60,.18);
+  }
+  .brand-title span{color:var(--amber);}
+  nav{display:flex;gap:4px;background:rgba(255,255,255,.04);padding:5px;border-radius:12px;border:1px solid rgba(255,255,255,.06);}
+  nav button{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    background:none;
+    border:none;
+    color:var(--muted);
+    padding:9px 18px;
+    cursor:pointer;
+    border-radius:9px;
+    transition:.2s var(--ease);
+  }
+  nav button.active{
+    background:var(--amber);
+    color:var(--text-dark);
+    font-weight:700;
+  }
+  nav button:not(.active):hover{
+    color:var(--text-light);
+    background:rgba(255,255,255,.06);
+  }
+  main{max-width:1140px;margin:0 auto;padding:44px 32px 100px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fadein .45s var(--ease);}
+  @keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes popin{from{opacity:0;transform:translateY(16px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+  /* ---------- HOME / TOOLBAR ---------- */
+  .home-top{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:32px;flex-wrap:wrap;gap:14px;
+  }
+  .home-top .label{font-size:12px;color:var(--muted);}
+  .home-top .label b{color:var(--amber);font-style:normal;}
+  .add-btn{
+    font-family:'Space Mono',monospace;
+    font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    background:linear-gradient(135deg,var(--stamp),#d1442c);
+    color:#fff;border:none;
+    padding:13px 22px;border-radius:12px;cursor:pointer;
+    box-shadow:0 8px 20px -6px rgba(232,92,65,.55);
+    transition:transform .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .add-btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px -6px rgba(232,92,65,.7);}
+  .add-btn:active{transform:translateY(0) scale(.98);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:24px;
+  }
+  .empty-state{
+    text-align:center;padding:70px 20px;color:var(--muted);
+    border:1.5px dashed rgba(255,255,255,.14);border-radius:16px;
+    background:rgba(255,255,255,.02);
+  }
+
+  /* ---------- PRODUCT CARD (kraft parcel) ---------- */
+  .parcel{
+    background:var(--kraft);
+    color:var(--text-dark);
+    border-radius:18px;
+    position:relative;
+    box-shadow:0 1px 2px rgba(0,0,0,.2), 0 14px 30px -14px rgba(0,0,0,.5);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+    transition:transform .32s var(--ease), box-shadow .32s var(--ease);
+    animation:popin .45s var(--ease) both;
+  }
+  .parcel:hover{
+    transform:translateY(-6px);
+    box-shadow:0 1px 2px rgba(0,0,0,.2), 0 26px 44px -16px rgba(0,0,0,.6);
+  }
+  .parcel-img-wrap{width:100%;aspect-ratio:1/1;overflow:hidden;background:linear-gradient(135deg,#e4d2b3,#d8c19a);}
+  .parcel-img{
+    width:100%;height:100%;object-fit:cover;
+    transition:transform .5s var(--ease);
+    display:block;
+  }
+  .parcel:hover .parcel-img{transform:scale(1.06);}
+  .parcel-tape{
+    position:absolute;top:14px;left:-15px;
+    background:var(--amber);
+    color:var(--text-dark);
+    font-family:'Space Mono',monospace;
+    font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+    padding:4px 26px;
+    transform:rotate(-45deg);
+    box-shadow:0 2px 6px rgba(0,0,0,.25);
+    z-index:2;
+  }
+  .parcel-body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:6px;flex:1;}
+  .parcel-body h3{font-size:19px;color:var(--text-dark);line-height:1.25;font-weight:600;}
+  .parcel-desc{font-size:13.5px;color:#5a4d3a;line-height:1.5;flex:1;}
+  .stamp-btn{
+    margin-top:10px;
+    align-self:flex-start;
+    font-family:'Space Mono',monospace;
+    font-size:12px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+    background:var(--text-dark);color:var(--kraft);
+    border:none;
+    padding:10px 20px;border-radius:50px;
+    cursor:pointer;
+    display:flex;align-items:center;gap:8px;
+    transition:.18s var(--ease);
+  }
+  .stamp-btn::after{content:'→';transition:transform .18s var(--ease);}
+  .stamp-btn:hover{background:var(--stamp);color:#fff;}
+  .stamp-btn:hover::after{transform:translateX(3px);}
+  .stamp-btn:active{transform:scale(.95);}
+  .card-admin-row{display:none;gap:8px;margin-top:10px;opacity:.55;transition:opacity .2s;}
+  .parcel:hover .card-admin-row{opacity:1;}
+  .admin-only{display:none !important;}
+  body.admin-mode .admin-only{display:revert !important;}
+  body.admin-mode .card-admin-row{display:flex;}
+  .admin-lock-btn{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--muted);
+    padding:8px 14px;border-radius:9px;cursor:pointer;
+  }
+  .admin-lock-btn:hover{color:var(--text-light);border-color:var(--amber);}
+  .mini-btn{
+    font-family:'Space Mono',monospace;font-size:11px;
+    background:rgba(0,0,0,.06);border:none;color:var(--text-dark);
+    padding:5px 10px;border-radius:6px;cursor:pointer;transition:.15s;
+  }
+  .mini-btn:hover{background:rgba(0,0,0,.12);}
+
+  /* ---------- FORM (add/edit product) ---------- */
+  .form-card{
+    background:var(--crate);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:20px;
+    padding:32px;
+    max-width:540px;
+    margin:0 auto;
+    box-shadow:0 24px 60px -24px rgba(0,0,0,.6);
+    animation:popin .4s var(--ease) both;
+  }
+  .form-card h2{font-size:23px;}
+  .form-card label{
+    display:block;font-family:'Space Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--amber);font-weight:700;
+    margin:18px 0 7px;
+  }
+  .form-card input[type=text], .form-card input[type=url], .form-card textarea{
+    width:100%;background:rgba(0,0,0,.22);border:1.5px solid var(--crate-line);
+    color:var(--text-light);padding:11px 14px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .form-card input:focus, .form-card textarea:focus{
+    outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(240,169,60,.18);
+  }
+  .form-card textarea{min-height:78px;resize:vertical;}
+  .file-drop{
+    border:1.5px dashed var(--crate-line);border-radius:14px;
+    padding:22px;text-align:center;cursor:pointer;color:var(--muted);
+    font-size:13px;transition:.18s;
+  }
+  .file-drop:hover{border-color:var(--amber);color:var(--amber-soft);background:rgba(240,169,60,.05);}
+  .file-drop img{max-height:130px;border-radius:10px;margin-top:8px;display:block;margin-left:auto;margin-right:auto;}
+  .form-actions{display:flex;gap:10px;margin-top:26px;}
+  .primary-btn{
+    background:linear-gradient(135deg,var(--amber),#e08f2a);color:var(--text-dark);border:none;
+    font-family:'Space Mono',monospace;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    padding:12px 22px;border-radius:11px;cursor:pointer;font-size:13px;
+    box-shadow:0 8px 20px -8px rgba(240,169,60,.6);
+    transition:transform .18s var(--ease);
+  }
+  .primary-btn:hover{transform:translateY(-2px);}
+  .primary-btn:active{transform:translateY(0) scale(.98);}
+  .primary-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+  .ghost-btn{
+    background:none;border:1.5px solid var(--crate-line);color:var(--muted);
+    font-family:'Space Mono',monospace;text-transform:uppercase;font-size:12.5px;letter-spacing:.05em;font-weight:700;
+    padding:12px 22px;border-radius:11px;cursor:pointer;transition:.18s;
+  }
+  .ghost-btn:hover{border-color:var(--muted);color:var(--text-light);}
+
+  /* ---------- PROFILE ---------- */
+  .profile-card{
+    background:var(--crate);border:1px solid rgba(255,255,255,.08);
+    border-radius:22px;padding:40px;max-width:640px;margin:0 auto;
+    position:relative;
+    box-shadow:0 24px 60px -24px rgba(0,0,0,.6);
+  }
+  .id-tag{
+    position:absolute;top:-13px;right:28px;
+    background:linear-gradient(135deg,var(--stamp),#d1442c);color:#fff;font-family:'Space Mono',monospace;
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:6px 14px;border-radius:8px;
+    box-shadow:0 6px 16px -4px rgba(232,92,65,.6);
+  }
+  .profile-top{display:flex;gap:22px;align-items:center;flex-wrap:wrap;}
+  .avatar{
+    width:92px;height:92px;border-radius:50%;object-fit:cover;
+    border:3px solid var(--amber);background:var(--crate-line);
+    box-shadow:0 0 0 5px rgba(240,169,60,.12);
+  }
+  .profile-name{font-size:27px;font-weight:600;}
+  .profile-bio{margin-top:18px;color:var(--muted);line-height:1.65;font-size:14.5px;white-space:pre-wrap;}
+  .social-list{margin-top:20px;display:flex;flex-direction:column;gap:2px;}
+  .social-list a{
+    color:var(--text-light);text-decoration:none;font-size:14px;font-weight:500;
+    border-bottom:1px solid rgba(255,255,255,.08);padding:12px 4px;
+    display:flex;justify-content:space-between;align-items:center;
+    transition:.15s;
+  }
+  .social-list a span{opacity:.4;transition:.15s;}
+  .social-list a:hover{color:var(--amber);padding-left:8px;}
+  .social-list a:hover span{opacity:1;transform:translateX(2px);}
+  .edit-profile-btn{margin-top:26px;}
+
+  /* ---------- WELCOME MODAL ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,8,14,.7);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;z-index:50;
+    animation:fadein .35s var(--ease);
+  }
+  .welcome-box{
+    background:linear-gradient(160deg,var(--kraft),var(--kraft-dark));
+    color:var(--text-dark);
+    padding:40px 36px;border-radius:24px;max-width:390px;text-align:center;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,.6);
+    position:relative;
+    animation:popin .5s var(--ease);
+  }
+  .welcome-box h2{font-size:28px;margin-bottom:12px;}
+  .welcome-box p{font-size:14.5px;color:#5a4d3a;line-height:1.6;}
+  .welcome-close{
+    margin-top:22px;background:var(--text-dark);color:var(--kraft);border:none;
+    font-family:'Space Mono',monospace;text-transform:uppercase;font-size:12px;letter-spacing:.06em;font-weight:700;
+    padding:12px 26px;border-radius:50px;cursor:pointer;transition:.18s var(--ease);
+  }
+  .welcome-close:hover{background:var(--stamp);transform:translateY(-2px);}
+
+  /* ---------- MUSIC TOGGLE (vinyl disc) ---------- */
+  .music-toggle{
+    position:fixed;bottom:26px;right:26px;z-index:40;
+    width:58px;height:58px;border-radius:50%;
+    background:var(--crate);border:1px solid rgba(255,255,255,.1);
+    padding:6px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow:0 12px 28px -10px rgba(0,0,0,.6);
+    transition:transform .18s var(--ease);
+  }
+  .music-toggle.hidden{display:none;}
+  .music-toggle:hover{transform:scale(1.08);}
+  .vinyl{
+    width:100%;height:100%;border-radius:50%;
+    position:relative;
+    background:
+      repeating-radial-gradient(circle at 50% 50%,
+        #0c0c10 0px, #0c0c10 3px,
+        #232228 4px, #232228 5px);
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.08), inset 0 2px 6px rgba(0,0,0,.5);
+    animation:spin 3.2s linear infinite;
+  }
+  .vinyl.paused{animation-play-state:paused;}
+  .vinyl::before{
+    content:'';position:absolute;inset:0;border-radius:50%;
+    background:linear-gradient(135deg, rgba(255,255,255,.08), transparent 55%);
+  }
+  .vinyl-label{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:38%;height:38%;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, var(--amber-soft), var(--amber) 70%);
+    box-shadow:0 0 0 2px rgba(0,0,0,.5);
+  }
+  .vinyl-label::after{
+    content:'';position:absolute;top:50%;left:50%;
+    width:5px;height:5px;background:#1a1408;border-radius:50%;
+    transform:translate(-50%,-50%);
+  }
+  @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:var(--text-light);color:var(--text-dark);
+    font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.04em;font-weight:700;
+    padding:12px 22px;border-radius:50px;z-index:60;
+    box-shadow:0 16px 36px -10px rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;transition:opacity .25s var(--ease), transform .25s var(--ease);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:520px){
+    header{padding:16px 20px;}
+    main{padding:32px 18px 90px;}
+    .profile-top{flex-direction:column;text-align:center;}
+    .id-tag{position:static;display:inline-block;margin-bottom:12px;}
+    .profile-card, .form-card{padding:26px;border-radius:18px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-title" id="siteTitle">Kho <span>Của Bạn</span></div>
+  <nav>
+    <button class="tab-btn active" data-view="home">Trang chủ</button>
+    <button class="tab-btn" data-view="profile">Hồ sơ</button>
+    <button class="admin-lock-btn" id="loginBtn">Đăng nhập</button>
+  </nav>
+</header>
+
+<main>
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <div class="home-top">
+      <div class="label">Kệ hàng &mdash; <span id="countLabel">0</span> sản phẩm</div>
+      <button class="add-btn admin-only" id="openAddBtn">+ Thêm sản phẩm</button>
+    </div>
+    <div class="grid" id="productGrid"></div>
+  </section>
+
+  <!-- ADD/EDIT PRODUCT -->
+  <section class="view" id="view-form">
+    <div class="form-card">
+      <h2 id="formTitle" style="font-size:22px;">Thêm sản phẩm mới</h2>
+      <label>Ảnh sản phẩm</label>
+      <div class="file-drop" id="fileDrop">Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)</div>
+      <input type="file" id="imgInput" accept="image/*" style="display:none;">
+      <label>Tên sản phẩm</label>
+      <input type="text" id="pTitle" placeholder="VD: Bộ preset Lightroom">
+      <label>Mô tả ngắn</label>
+      <textarea id="pDesc" placeholder="Vài dòng giới thiệu sản phẩm..."></textarea>
+      <label>Link nhận hàng (link vượt / shortlink)</label>
+      <input type="url" id="pLink" placeholder="https://...">
+      <div class="form-actions">
+        <button class="primary-btn" id="saveProductBtn">Lưu sản phẩm</button>
+        <button class="ghost-btn" id="cancelFormBtn">Huỷ</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="view" id="view-profile">
+    <div class="profile-card" id="profileView">
+      <div class="id-tag">Chủ kho</div>
+      <div class="profile-top">
+        <img class="avatar" id="pfAvatar" src="" alt="">
+        <div>
+          <h2 class="profile-name" id="pfName">Chưa đặt tên</h2>
+          <div class="label" id="pfSiteNameLabel">TÊN CỬA HÀNG</div>
+        </div>
+      </div>
+      <p class="profile-bio" id="pfBio">Chưa có giới thiệu.</p>
+      <div class="social-list" id="pfSocials"></div>
+      <button class="ghost-btn edit-profile-btn admin-only" id="editProfileBtn">Chỉnh sửa hồ sơ</button>
+    </div>
+
+    <div class="form-card" id="profileEditForm" style="display:none;margin-top:20px;">
+      <h2 style="font-size:22px;">Chỉnh sửa hồ sơ</h2>
+      <label>Tên cửa hàng (hiển thị trên đầu trang)</label>
+      <input type="text" id="fSiteName" placeholder="Kho Của Bạn">
+      <label>Ảnh đại diện</label>
+      <div class="file-drop" id="avatarDrop">Nhấn để chọn ảnh đại diện</div>
+      <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+      <label>Tên hiển thị</label>
+      <input type="text" id="fName" placeholder="Tên của bạn">
+      <label>Giới thiệu</label>
+      <textarea id="fBio" placeholder="Vài dòng về bạn hoặc gian hàng..."></textarea>
+      <label>Link mạng xã hội / liên hệ (mỗi dòng: Tên | URL)</label>
+      <textarea id="fSocials" placeholder="Facebook | https://facebook.com/...&#10;Zalo | https://zalo.me/..."></textarea>
+      <label>Nhạc nền cho web (mp3, nên dưới 5MB)</label>
+      <div class="file-drop" id="musicDrop">Nhấn để chọn file nhạc mp3</div>
+      <input type="file" id="musicInput" accept="audio/*" style="display:none;">
+      <div id="musicStatus" style="font-size:12.5px;color:var(--muted);margin-top:6px;"></div>
+      <div class="form-actions">
+        <button class="primary-btn" id="saveProfileBtn">Lưu hồ sơ</button>
+        <button class="ghost-btn" id="cancelProfileBtn">Huỷ</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<audio id="bgAudio" loop style="display:none;"></audio>
+<div class="music-toggle hidden" id="musicToggle" title="Bật/tắt nhạc">
+  <div class="vinyl" id="vinylDisc"><div class="vinyl-label"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="welcomeOverlay">
+  <div class="welcome-box">
+    <h2>Xin chào! 👋</h2>
+    <p>Chào mừng bạn đến với gian hàng. Chọn sản phẩm bạn thích và nhấn "Nhận sản phẩm" để lấy về nhé.</p>
+    <button class="welcome-close" id="closeWelcomeBtn">Đóng &amp; bắt đầu</button>
+  </div>
+</div>
+
+<div class="overlay" id="loginOverlay" style="display:none;">
+  <div class="welcome-box" style="max-width:340px;">
+    <h2 id="loginTitle">Đăng nhập</h2>
+    <p id="loginSubtitle">Bạn đang xem với tư cách nào?</p>
+    <div id="loginChoiceRow" style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
+      <button class="welcome-close" id="loginViewerBtn" style="background:var(--text-dark);">Tôi là khách xem</button>
+      <button class="welcome-close" id="loginAdminBtn" style="background:var(--stamp);">Tôi là Admin</button>
+    </div>
+    <div id="adminPassSection" style="display:none;margin-top:6px;">
+      <input type="password" id="adminPassInput" placeholder="Nhập mật khẩu admin"
+        style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #c9ad80;background:#fff;font-size:14px;box-sizing:border-box;">
+      <button class="welcome-close" id="submitAdminPassBtn" style="width:100%;margin-top:12px;background:var(--stamp);">Xác nhận</button>
+    </div>
+    <button class="welcome-close" id="closeLoginBtn" style="margin-top:10px;background:none;color:#5a4d3a;box-shadow:none;">Đóng</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ---------------- CONFIG ----------------
+const ADMIN_PASSWORD = "hmm_0804";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAc_AJqiv0WX9FYOPCbDPR9nq8OWS0PkmE",
+  authDomain: "vippro-3c3cb.firebaseapp.com",
+  projectId: "vippro-3c3cb",
+  storageBucket: "vippro-3c3cb.firebasestorage.app",
+  messagingSenderId: "421125951716",
+  appId: "1:421125951716:web:03e8f12c4569d10849dcf1",
+  measurementId: "G-7N4C0D55CJ"
+};
+let db = null;
+try{
+  const app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+}catch(e){
+  console.error('Chưa cấu hình Firebase đúng cách:', e);
+}
+
+// ---------------- CLOUDINARY (lưu ảnh & nhạc) ----------------
+const CLOUDINARY_CLOUD_NAME = "zi8ez10p";
+const CLOUDINARY_UPLOAD_PRESET = "buivinhvip";
+
+async function uploadToCloudinary(file){
+  if(!file) throw new Error('Không có file để tải lên.');
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+    method: 'POST',
+    body: formData
+  });
+  if(!res.ok){
+    const errText = await res.text();
+    throw new Error('Cloudinary lỗi: ' + errText);
+  }
+  const data = await res.json();
+  return data.secure_url;
+}
+
+
+// ---------------- HELPERS ----------------
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+}
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click', ()=>switchView(b.dataset.view));
+});
+
+// Nén ảnh và trả về CẢ preview (data URL, chỉ để xem trước) LẪN blob (để upload lên Cloudinary).
+// Trước đây ảnh được lưu thẳng dạng base64 vào Firestore -> dễ vượt quá giới hạn 1MB/document
+// của Firestore và bị lưu lỗi âm thầm, khiến ảnh "biến mất" sau khi upload.
+function compressImageToBlob(file, maxW=700, quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, maxW/img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width*scale;
+        canvas.height = img.height*scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        const previewUrl = canvas.toDataURL('image/jpeg', quality);
+        canvas.toBlob(blob=>{
+          if(blob) resolve({previewUrl, blob});
+          else reject(new Error('Không tạo được ảnh nén.'));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---------------- STORAGE (Firebase Firestore) ----------------
+async function loadProducts(){
+  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return []; }
+  try{
+    const snap = await getDocs(collection(db, 'products'));
+    const list = snap.docs.map(d=>d.data());
+    list.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    return list;
+  }catch(e){
+    console.error(e);
+    showToast('Không tải được sản phẩm, kiểm tra cấu hình Firebase.');
+    return [];
+  }
+}
+async function saveProductDoc(p){
+  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
+  try{
+    await setDoc(doc(db,'products', p.id), p);
+    return true;
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi lưu sản phẩm: ' + (e && e.message ? e.message : 'không rõ nguyên nhân'));
+    return false;
+  }
+}
+async function removeProductDoc(id){
+  if(!db) return;
+  try{ await deleteDoc(doc(db,'products', id)); }
+  catch(e){ console.error(e); showToast('Lỗi xoá sản phẩm.'); }
+}
+async function loadProfile(){
+  if(!db) return null;
+  try{
+    const snap = await getDoc(doc(db,'site','profile'));
+    return snap.exists() ? snap.data() : null;
+  }catch(e){ console.error(e); return null; }
+}
+async function saveProfile(p){
+  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
+  try{
+    await setDoc(doc(db,'site','profile'), p);
+    return true;
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi lưu hồ sơ: ' + (e && e.message ? e.message : 'không rõ nguyên nhân'));
+    return false;
+  }
+}
+
+// ---------------- PRODUCTS ----------------
+let products = [];
+let editingId = null;
+let pendingImageData = null; // link ảnh hiện tại (dùng để hiển thị / giữ nguyên nếu không đổi ảnh)
+let pendingImageBlob = null; // file ảnh MỚI được chọn, chờ upload lên Cloudinary khi bấm Lưu
+
+async function renderProducts(){
+  products = await loadProducts();
+  const grid = document.getElementById('productGrid');
+  document.getElementById('countLabel').textContent = products.length;
+  if(products.length===0){
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Chưa có sản phẩm nào. Nhấn "+ Thêm sản phẩm" để bắt đầu.</div>';
+    return;
+  }
+  grid.innerHTML = products.map((p,idx)=>`
+    <div class="parcel" style="animation-delay:${Math.min(idx*0.06,0.4)}s">
+      <div class="parcel-tape">Hàng mới</div>
+      <div class="parcel-img-wrap">
+        ${p.image ? `<img class="parcel-img" src="${p.image}" alt="${escapeHtml(p.title)}">` : ''}
+      </div>
+      <div class="parcel-body">
+        <h3>${escapeHtml(p.title)}</h3>
+        <div class="parcel-desc">${escapeHtml(p.desc||'')}</div>
+        <button class="stamp-btn" onclick="claimProduct('${p.id}')">Nhận sản phẩm</button>
+        <div class="card-admin-row">
+          <button class="mini-btn" onclick="startEdit('${p.id}')">Sửa</button>
+          <button class="mini-btn" onclick="deleteProduct('${p.id}')">Xoá</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+window.claimProduct = function(id){
+  const p = products.find(x=>x.id===id);
+  if(p && p.link) window.open(p.link, '_blank');
+  else showToast('Sản phẩm chưa có link nhận.');
+};
+window.startEdit = function(id){
+  if(!checkAdmin()) return;
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  editingId = id;
+  pendingImageData = p.image || null;
+  pendingImageBlob = null;
+  document.getElementById('formTitle').textContent = 'Sửa sản phẩm';
+  document.getElementById('pTitle').value = p.title;
+  document.getElementById('pDesc').value = p.desc||'';
+  document.getElementById('pLink').value = p.link||'';
+  document.getElementById('fileDrop').innerHTML = p.image ? `<img src="${p.image}">` : 'Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)';
+  switchView('form');
+};
+window.deleteProduct = async function(id){
+  if(!checkAdmin()) return;
+  if(!confirm('Xoá sản phẩm này?')) return;
+  await removeProductDoc(id);
+  products = products.filter(x=>x.id!==id);
+  renderProducts();
+  showToast('Đã xoá sản phẩm.');
+  setTimeout(()=>location.reload(), 400);
+};
+function isAdminUnlocked(){
+  return localStorage.getItem('siteAdminUnlocked') === '1';
+}
+function updateAdminUI(){
+  document.body.classList.toggle('admin-mode', isAdminUnlocked());
+  document.getElementById('loginBtn').textContent = isAdminUnlocked() ? '🔓 Thoát admin' : 'Đăng nhập';
+}
+function openLoginModal(){
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('loginChoiceRow').style.display = 'flex';
+  document.getElementById('adminPassSection').style.display = 'none';
+  document.getElementById('adminPassInput').value = '';
+  document.getElementById('loginTitle').textContent = 'Đăng nhập';
+  document.getElementById('loginSubtitle').textContent = 'Bạn đang xem với tư cách nào?';
+}
+function closeLoginModal(){
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  if(isAdminUnlocked()){
+    localStorage.removeItem('siteAdminUnlocked');
+    updateAdminUI();
+    showToast('Đã thoát quyền quản trị.');
+  } else {
+    openLoginModal();
+  }
+});
+document.getElementById('loginViewerBtn').addEventListener('click', closeLoginModal);
+document.getElementById('closeLoginBtn').addEventListener('click', closeLoginModal);
+document.getElementById('loginAdminBtn').addEventListener('click', ()=>{
+  document.getElementById('loginChoiceRow').style.display = 'none';
+  document.getElementById('adminPassSection').style.display = 'block';
+  document.getElementById('loginSubtitle').textContent = 'Nhập mật khẩu quản trị:';
+  document.getElementById('adminPassInput').focus();
+});
+function submitAdminPass(){
+  const pass = document.getElementById('adminPassInput').value;
+  if(pass === ADMIN_PASSWORD){
+    localStorage.setItem('siteAdminUnlocked', '1');
+    updateAdminUI();
+    closeLoginModal();
+    showToast('Đã đăng nhập với quyền Admin.');
+  } else {
+    showToast('Sai mật khẩu.');
+  }
+}
+document.getElementById('submitAdminPassBtn').addEventListener('click', submitAdminPass);
+document.getElementById('adminPassInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') submitAdminPass();
+});
+function checkAdmin(){
+  return isAdminUnlocked();
+}
+
+document.getElementById('openAddBtn').addEventListener('click', ()=>{
+  if(!checkAdmin()) return;
+  editingId = null;
+  pendingImageData = null;
+  pendingImageBlob = null;
+  document.getElementById('formTitle').textContent = 'Thêm sản phẩm mới';
+  document.getElementById('pTitle').value = '';
+  document.getElementById('pDesc').value = '';
+  document.getElementById('pLink').value = '';
+  document.getElementById('fileDrop').innerHTML = 'Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)';
+  switchView('form');
+});
+document.getElementById('cancelFormBtn').addEventListener('click', ()=>switchView('home'));
+
+document.getElementById('fileDrop').addEventListener('click', ()=>document.getElementById('imgInput').click());
+document.getElementById('imgInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const {previewUrl, blob} = await compressImageToBlob(file);
+    pendingImageBlob = blob;
+    pendingImageData = previewUrl; // chỉ để xem trước ngay lập tức, sẽ được thay bằng link Cloudinary khi Lưu
+    document.getElementById('fileDrop').innerHTML = `<img src="${previewUrl}">`;
+  }catch(err){
+    console.error(err);
+    showToast('Không đọc được ảnh, thử ảnh khác nhé.');
+  }
+});
+
+document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
+  const title = document.getElementById('pTitle').value.trim();
+  const desc = document.getElementById('pDesc').value.trim();
+  const link = document.getElementById('pLink').value.trim();
+  if(!title){ showToast('Vui lòng nhập tên sản phẩm.'); return; }
+  if(!link){ showToast('Vui lòng nhập link nhận hàng.'); return; }
+
+  const saveBtn = document.getElementById('saveProductBtn');
+  saveBtn.disabled = true;
+
+  let imageUrl = pendingImageData;
+  if(pendingImageBlob){
+    showToast('Đang tải ảnh lên...');
+    try{
+      imageUrl = await uploadToCloudinary(pendingImageBlob);
+    }catch(err){
+      console.error(err);
+      showToast('Lỗi tải ảnh lên: ' + (err && err.message ? err.message : 'kiểm tra Cloudinary'));
+      saveBtn.disabled = false;
+      return; // dừng lại, KHÔNG lưu sản phẩm nếu ảnh tải lỗi
+    }
+  }
+
+  let productToSave;
+  if(editingId){
+    const p = products.find(x=>x.id===editingId);
+    p.title = title; p.desc = desc; p.link = link; p.image = imageUrl;
+    productToSave = p;
+  } else {
+    productToSave = {id: 'p'+Date.now(), title, desc, link, image: imageUrl, createdAt: Date.now()};
+    products.push(productToSave);
+  }
+
+  const ok = await saveProductDoc(productToSave);
+  saveBtn.disabled = false;
+  if(!ok) return; // lỗi đã hiện toast bên trong saveProductDoc, không reload để mất dấu lỗi
+
+  renderProducts();
+  switchView('home');
+  showToast('Đã lưu sản phẩm!');
+  setTimeout(()=>location.reload(), 400);
+});
+
+// ---------------- PROFILE ----------------
+let profileData = {siteName:'Kho Của Bạn', name:'', bio:'', avatar:'', socials:[]};
+
+async function renderProfile(){
+  const p = await loadProfile();
+  if(p) profileData = p;
+  document.getElementById('siteTitle').innerHTML = renderSiteTitle(profileData.siteName);
+  document.getElementById('pfName').textContent = profileData.name || 'Chưa đặt tên';
+  document.getElementById('pfBio').textContent = profileData.bio || 'Chưa có giới thiệu.';
+  document.getElementById('pfAvatar').src = profileData.avatar || defaultAvatar();
+  document.getElementById('pfSiteNameLabel').textContent = (profileData.siteName||'KHO CỦA BẠN').toUpperCase();
+  const socials = document.getElementById('pfSocials');
+  socials.innerHTML = (profileData.socials||[]).map(s=>`<a href="${s.url}" target="_blank">${escapeHtml(s.label)} <span>↗</span></a>`).join('');
+}
+function renderSiteTitle(name){
+  name = name || 'Kho Của Bạn';
+  const parts = name.split(' ');
+  const last = parts.pop();
+  return parts.join(' ') + ' <span>' + last + '</span>';
+}
+function defaultAvatar(){
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88"><rect width="88" height="88" fill="%23DCC6A0"/></svg>`).replace(/%23/g,'#');
+}
+
+document.getElementById('editProfileBtn').addEventListener('click', ()=>{
+  if(!checkAdmin()) return;
+  document.getElementById('fSiteName').value = profileData.siteName||'';
+  document.getElementById('fName').value = profileData.name||'';
+  document.getElementById('fBio').value = profileData.bio||'';
+  document.getElementById('fSocials').value = (profileData.socials||[]).map(s=>`${s.label} | ${s.url}`).join('\n');
+  document.getElementById('avatarDrop').innerHTML = profileData.avatar ? `<img src="${profileData.avatar}" class="avatar">` : 'Nhấn để chọn ảnh đại diện';
+  pendingAvatarBlob = null;
+  pendingMusicFile = null;
+  document.getElementById('musicStatus').textContent = profileData.musicUrl ? 'Đang dùng: nhạc bạn đã tải lên trước đó.' : 'Chưa có nhạc — web sẽ không phát nhạc cho đến khi bạn tải lên.';
+  document.getElementById('profileEditForm').style.display = 'block';
+  document.getElementById('profileEditForm').scrollIntoView({behavior:'smooth'});
+});
+document.getElementById('cancelProfileBtn').addEventListener('click', ()=>{
+  document.getElementById('profileEditForm').style.display='none';
+});
+
+let pendingAvatarBlob = null; // file ảnh đại diện MỚI, chờ upload lên Cloudinary khi bấm Lưu
+let pendingMusicFile = null;
+document.getElementById('avatarDrop').addEventListener('click', ()=>document.getElementById('avatarInput').click());
+document.getElementById('avatarInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const {previewUrl, blob} = await compressImageToBlob(file, 300, 0.85);
+    pendingAvatarBlob = blob;
+    document.getElementById('avatarDrop').innerHTML = `<img src="${previewUrl}" class="avatar">`;
+  }catch(err){
+    console.error(err);
+    showToast('Không đọc được ảnh đại diện, thử ảnh khác nhé.');
+  }
+});
+
+document.getElementById('musicDrop').addEventListener('click', ()=>document.getElementById('musicInput').click());
+document.getElementById('musicInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 10*1024*1024){
+    showToast('File nhạc quá lớn, chọn file dưới 10MB nhé.');
+    return;
+  }
+  pendingMusicFile = file;
+  document.getElementById('musicStatus').textContent = `Đã chọn: ${file.name} (chưa lưu — nhấn "Lưu hồ sơ" để áp dụng)`;
+});
+
+document.getElementById('saveProfileBtn').addEventListener('click', async ()=>{
+  const saveBtn = document.getElementById('saveProfileBtn');
+  saveBtn.disabled = true;
+
+  profileData.siteName = document.getElementById('fSiteName').value.trim() || 'Kho Của Bạn';
+  profileData.name = document.getElementById('fName').value.trim();
+  profileData.bio = document.getElementById('fBio').value.trim();
+  profileData.socials = document.getElementById('fSocials').value.split('\n')
+    .map(l=>l.split('|').map(s=>s.trim()))
+    .filter(pair=>pair.length===2 && pair[0] && pair[1])
+    .map(([label,url])=>({label,url}));
+
+  if(pendingAvatarBlob){
+    showToast('Đang tải ảnh đại diện lên...');
+    try{
+      profileData.avatar = await uploadToCloudinary(pendingAvatarBlob);
+    }catch(err){
+      console.error(err);
+      showToast('Lỗi tải ảnh đại diện: ' + (err && err.message ? err.message : 'kiểm tra Cloudinary'));
+      saveBtn.disabled = false;
+      return; // dừng lại, không lưu hồ sơ nếu ảnh lỗi
+    }
+  }
+
+  if(pendingMusicFile){
+    showToast('Đang tải nhạc lên...');
+    try{
+      profileData.musicUrl = await uploadToCloudinary(pendingMusicFile);
+    }catch(e){
+      console.error(e);
+      showToast('Lỗi tải nhạc lên: ' + (e && e.message ? e.message : 'kiểm tra Cloudinary'));
+      saveBtn.disabled = false;
+      return;
+    }
+  }
+
+  const ok = await saveProfile(profileData);
+  saveBtn.disabled = false;
+  if(!ok) return; // lỗi đã hiện toast bên trong saveProfile
+
+  document.getElementById('profileEditForm').style.display='none';
+  renderProfile();
+  applyMusicSource();
+  showToast('Đã lưu hồ sơ!');
+  setTimeout(()=>location.reload(), 400);
+});
+
+// ---------------- WELCOME + MUSIC ----------------
+let musicPlaying = false;
+const bgAudio = document.getElementById('bgAudio');
+
+// Gọi khi hồ sơ thay đổi để nạp lại nguồn nhạc (không tự phát, chỉ chuẩn bị)
+function applyMusicSource(){
+  if(profileData.musicUrl && bgAudio.src !== profileData.musicUrl){
+    bgAudio.src = profileData.musicUrl;
+  }
+}
+
+async function startMusic(){
+  applyMusicSource();
+  if(!profileData.musicUrl){
+    return; // chưa có nhạc thì không phát gì cả
+  }
+  bgAudio.volume = 0.5;
+  try{
+    await bgAudio.play();
+    musicPlaying = true;
+    document.getElementById('musicToggle').classList.remove('hidden');
+    document.getElementById('vinylDisc').classList.remove('paused');
+  }catch(e){ console.error('Không phát được nhạc:', e); }
+}
+function toggleMusic(){
+  if(musicPlaying){
+    bgAudio.pause();
+    musicPlaying = false;
+    document.getElementById('vinylDisc').classList.add('paused');
+  } else {
+    bgAudio.play();
+    musicPlaying = true;
+    document.getElementById('vinylDisc').classList.remove('paused');
+  }
+}
+document.getElementById('musicToggle').addEventListener('click', toggleMusic);
+document.getElementById('closeWelcomeBtn').addEventListener('click', ()=>{
+  document.getElementById('welcomeOverlay').style.display = 'none';
+  startMusic();
+});
+
+// ---------------- INIT ----------------
+(async function init(){
+  updateAdminUI();
+  await renderProducts();
+  await renderProfile();
+  applyMusicSource();
+})();
+</script>
+</body>
+</html>
