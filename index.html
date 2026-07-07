@@ -80,6 +80,7 @@
     box-shadow:0 0 0 4px rgba(240,169,60,.18);
   }
   .brand-title span{color:var(--amber);}
+  .header-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   nav{display:flex;gap:4px;background:rgba(255,255,255,.04);padding:5px;border-radius:12px;border:1px solid rgba(255,255,255,.06);}
   nav button{
     font-family:'Space Mono',monospace;
@@ -103,6 +104,25 @@
     color:var(--text-light);
     background:rgba(255,255,255,.06);
   }
+  .user-auth-box{display:flex;align-items:center;gap:8px;}
+  .user-auth-btn{
+    font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    background:rgba(124,108,240,.14);border:1px solid rgba(124,108,240,.4);color:var(--violet);
+    padding:9px 16px;border-radius:10px;cursor:pointer;transition:.18s var(--ease);
+  }
+  .user-auth-btn:hover{background:var(--violet);color:#fff;}
+  .user-badge{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    padding:6px 8px 6px 12px;border-radius:50px;
+  }
+  .user-badge-name{font-size:12.5px;font-weight:600;color:var(--text-light);white-space:nowrap;}
+  .user-badge-logout{
+    font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    background:rgba(255,255,255,.08);border:none;color:var(--muted);
+    padding:6px 10px;border-radius:50px;cursor:pointer;transition:.15s;
+  }
+  .user-badge-logout:hover{background:var(--stamp);color:#fff;}
   main{max-width:1140px;margin:0 auto;padding:44px 32px 100px;}
   .view{display:none;}
   .view.active{display:block;animation:fadein .45s var(--ease);}
@@ -127,6 +147,110 @@
   }
   .add-btn:hover{transform:translateY(-2px);box-shadow:0 12px 26px -6px rgba(232,92,65,.7);}
   .add-btn:active{transform:translateY(0) scale(.98);}
+
+  /* ---------- SEARCH + COLLECTION CHIPS ---------- */
+  .search-row{margin-bottom:18px;}
+  .search-wrap{
+    position:relative;
+    display:flex;align-items:center;
+    background:rgba(255,255,255,.045);
+    border:1.5px solid var(--crate-line);
+    border-radius:15px;
+    padding:0 14px;
+    transition:border-color .22s var(--ease), box-shadow .22s var(--ease), background .22s var(--ease);
+  }
+  .search-wrap.focused{
+    border-color:var(--amber);
+    background:rgba(255,255,255,.065);
+    box-shadow:0 0 0 4px rgba(240,169,60,.14), 0 14px 30px -16px rgba(0,0,0,.5);
+  }
+  .search-icon{flex:0 0 auto;color:var(--muted);transition:color .2s var(--ease);}
+  .search-wrap.focused .search-icon{color:var(--amber);}
+  .search-input{
+    flex:1;min-width:0;
+    background:none;border:none;outline:none;
+    color:var(--text-light);
+    padding:14px 10px;
+    font-family:'Inter',sans-serif;font-size:14.5px;
+  }
+  .search-input::placeholder{color:var(--muted);}
+  .search-clear-btn{
+    flex:0 0 auto;
+    width:24px;height:24px;border-radius:50%;
+    background:rgba(255,255,255,.08);border:none;color:var(--muted);
+    display:none;align-items:center;justify-content:center;
+    cursor:pointer;font-size:11px;line-height:1;
+    transition:.15s;margin-right:6px;
+  }
+  .search-clear-btn:hover{background:var(--stamp);color:#fff;}
+  .search-shortcut-hint{
+    flex:0 0 auto;
+    font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+    padding:3px 8px;border-radius:6px;
+  }
+  .search-wrap.focused .search-shortcut-hint{display:none;}
+  .search-suggestions{
+    position:absolute;top:calc(100% + 10px);left:0;right:0;
+    background:var(--kraft);color:var(--text-dark);
+    border-radius:16px;
+    box-shadow:0 24px 50px -16px rgba(0,0,0,.55);
+    max-height:0;opacity:0;pointer-events:none;
+    transform:translateY(-6px);
+    overflow:hidden;
+    transition:max-height .28s var(--ease), opacity .2s var(--ease), transform .24s var(--ease);
+    z-index:20;
+  }
+  .search-suggestions.open{
+    max-height:420px;opacity:1;pointer-events:auto;transform:translateY(0);
+    overflow-y:auto;
+  }
+  .search-suggestion-item{
+    display:flex;align-items:center;gap:12px;
+    padding:11px 14px;cursor:pointer;
+    border-bottom:1px solid rgba(0,0,0,.06);
+    transition:background .15s;
+  }
+  .search-suggestion-item:last-child{border-bottom:none;}
+  .search-suggestion-item:hover{background:rgba(240,169,60,.14);}
+  .search-suggestion-thumb{
+    width:40px;height:40px;border-radius:9px;flex:0 0 40px;
+    overflow:hidden;background:linear-gradient(135deg,#e4d2b3,#d8c19a);
+  }
+  .search-suggestion-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .search-suggestion-info{flex:1;min-width:0;}
+  .search-suggestion-title{
+    font-size:13.5px;font-weight:600;color:var(--text-dark);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .search-suggestion-tag{
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--stamp);margin-top:2px;
+  }
+  .search-suggestion-arrow{flex:0 0 auto;color:#b3a487;font-size:14px;}
+  .search-suggestion-empty{padding:20px 16px;text-align:center;color:#7a6b52;font-size:13px;}
+  .collection-chips{
+    display:flex;flex-wrap:wrap;gap:9px;margin-bottom:28px;
+  }
+  .chip{
+    font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+    background:rgba(255,255,255,.045);border:1.5px solid rgba(255,255,255,.1);color:var(--muted);
+    padding:9px 16px;border-radius:50px;cursor:pointer;
+    display:flex;align-items:center;gap:8px;
+    transition:.18s var(--ease);
+  }
+  .chip:hover{color:var(--text-light);border-color:rgba(255,255,255,.25);}
+  .chip.active{background:var(--amber);color:var(--text-dark);border-color:var(--amber);}
+  .chip-count{opacity:.7;font-weight:400;}
+  .chip-remove{
+    opacity:.5;font-size:12px;line-height:1;padding:2px 4px;border-radius:50%;
+    transition:.15s;
+  }
+  .chip-remove:hover{opacity:1;background:rgba(0,0,0,.18);}
+  .chip-add{
+    border-style:dashed;color:var(--amber-soft);background:none;
+  }
+  .chip-add:hover{border-color:var(--amber);color:var(--amber);background:rgba(240,169,60,.06);}
 
   .grid{
     display:grid;
@@ -172,6 +296,7 @@
     transform:rotate(-45deg);
     box-shadow:0 2px 6px rgba(0,0,0,.25);
     z-index:2;
+    max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .parcel-body{padding:16px 18px;display:flex;flex-direction:column;gap:5px;flex:1;min-width:0;justify-content:center;}
   .parcel-body h3{font-size:17px;color:var(--text-dark);line-height:1.25;font-weight:600;}
@@ -232,12 +357,14 @@
     text-transform:uppercase;letter-spacing:.1em;color:var(--amber);font-weight:700;
     margin:18px 0 7px;
   }
-  .form-card input[type=text], .form-card input[type=url], .form-card textarea{
+  .form-card input[type=text], .form-card input[type=url], .form-card input[type=password], .form-card textarea, .form-card select{
     width:100%;background:rgba(0,0,0,.22);border:1.5px solid var(--crate-line);
     color:var(--text-light);padding:11px 14px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;
     transition:border-color .15s, box-shadow .15s;
   }
-  .form-card input:focus, .form-card textarea:focus{
+  .form-card select{cursor:pointer;}
+  .form-card select option{background:var(--crate);color:var(--text-light);}
+  .form-card input:focus, .form-card textarea:focus, .form-card select:focus{
     outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(240,169,60,.18);
   }
   .form-card textarea{min-height:78px;resize:vertical;}
@@ -322,6 +449,25 @@
     padding:12px 26px;border-radius:50px;cursor:pointer;transition:.18s var(--ease);
   }
   .welcome-close:hover{background:var(--stamp);transform:translateY(-2px);}
+
+  /* ---------- USER AUTH MODAL ---------- */
+  .auth-tabs{display:flex;gap:6px;background:rgba(0,0,0,.06);padding:5px;border-radius:12px;margin-bottom:18px;}
+  .auth-tab-btn{
+    flex:1;font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    background:none;border:none;color:#7a6b52;padding:10px 8px;border-radius:9px;cursor:pointer;transition:.18s var(--ease);
+  }
+  .auth-tab-btn.active{background:var(--text-dark);color:var(--kraft);}
+  .auth-form{display:none;text-align:left;}
+  .auth-form.active{display:block;}
+  .auth-form input{
+    width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #c9ad80;background:#fff;
+    font-size:14px;box-sizing:border-box;margin-bottom:10px;font-family:'Inter',sans-serif;
+  }
+  .auth-form label{
+    display:block;font-family:'Space Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:#8a6d2f;font-weight:700;margin-bottom:5px;
+  }
+  .auth-error-msg{display:none;color:#c23a22;font-size:12.5px;margin-top:2px;margin-bottom:8px;font-weight:600;}
 
   /* ---------- MUSIC PLAYER (mini player) ---------- */
   .player-bar{
@@ -491,6 +637,11 @@
     flex:1;min-width:0;padding:34px 32px;
     display:flex;flex-direction:column;overflow-y:auto;
   }
+  .modal-collection-tag{
+    display:none;align-self:flex-start;
+    font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+    background:rgba(0,0,0,.08);color:var(--stamp);padding:6px 14px;border-radius:50px;margin-bottom:12px;
+  }
   .product-modal-body h2{font-size:26px;line-height:1.2;margin-bottom:14px;}
   .product-modal-desc{
     font-size:14.5px;color:#5a4d3a;line-height:1.65;
@@ -537,11 +688,13 @@
 
 <header>
   <div class="brand-title" id="siteTitle">Kho <span>Của Bạn</span></div>
-  <nav>
-    <button class="tab-btn active" data-view="home">Trang chủ</button>
-    <button class="tab-btn" data-view="profile">Hồ sơ</button>
-    <button class="admin-lock-btn" id="loginBtn">Đăng nhập</button>
-  </nav>
+  <div class="header-right">
+    <nav>
+      <button class="tab-btn active" data-view="home">Trang chủ</button>
+      <button class="tab-btn" data-view="profile">Hồ sơ</button>
+      <button class="admin-lock-btn" id="loginBtn">Đăng nhập</button>
+    </nav>
+  </div>
 </header>
 
 <main>
@@ -551,6 +704,19 @@
       <div class="label">Kệ hàng &mdash; <span id="countLabel">0</span> sản phẩm</div>
       <button class="add-btn admin-only" id="openAddBtn">+ Thêm sản phẩm</button>
     </div>
+    <div class="search-row">
+      <div class="search-wrap" id="searchWrap">
+        <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm sản phẩm theo tên hoặc mô tả..." autocomplete="off">
+        <button class="search-clear-btn" id="searchClearBtn" title="Xoá tìm kiếm">✕</button>
+        <span class="search-shortcut-hint" id="searchShortcutHint">/</span>
+        <div class="search-suggestions" id="searchSuggestions"></div>
+      </div>
+    </div>
+    <div class="collection-chips" id="collectionChips"></div>
     <div class="grid" id="productGrid"></div>
   </section>
 
@@ -567,6 +733,9 @@
       <textarea id="pDesc" placeholder="Vài dòng giới thiệu sản phẩm..."></textarea>
       <label>Link nhận hàng (link vượt / shortlink)</label>
       <input type="url" id="pLink" placeholder="https://...">
+      <label>Bộ sưu tập</label>
+      <select id="pCollection"></select>
+      <input type="text" id="pNewCollectionName" placeholder="Nhập tên bộ sưu tập mới..." style="display:none;margin-top:8px;">
       <div class="form-actions">
         <button class="primary-btn" id="saveProductBtn">Lưu sản phẩm</button>
         <button class="ghost-btn" id="cancelFormBtn">Huỷ</button>
@@ -680,6 +849,7 @@
       <img id="modalImg" src="" alt="">
     </div>
     <div class="product-modal-body">
+      <div class="modal-collection-tag" id="modalCollectionTag"></div>
       <h2 id="modalTitle"></h2>
       <div class="product-modal-desc" id="modalDesc"></div>
       <div class="product-modal-actions">
@@ -698,20 +868,36 @@
   </div>
 </div>
 
-<div class="overlay" id="loginOverlay" style="display:none;">
-  <div class="welcome-box" style="max-width:340px;">
-    <h2 id="loginTitle">Đăng nhập</h2>
-    <p id="loginSubtitle">Bạn đang xem với tư cách nào?</p>
-    <div id="loginChoiceRow" style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
-      <button class="welcome-close" id="loginViewerBtn" style="background:var(--text-dark);">Tôi là khách xem</button>
-      <button class="welcome-close" id="loginAdminBtn" style="background:var(--stamp);">Tôi là Admin</button>
+<div class="overlay" id="userAuthOverlay" style="display:none;">
+  <div class="welcome-box" style="max-width:360px;">
+    <h2 style="font-size:24px;">Đăng nhập</h2>
+    <p style="margin-bottom:0;">Đăng nhập tài khoản của bạn hoặc tài khoản quản trị viên, hoặc tạo tài khoản mới để nhận sản phẩm.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" id="authTabLoginBtn">Đăng nhập</button>
+      <button class="auth-tab-btn" id="authTabRegisterBtn">Đăng ký</button>
     </div>
-    <div id="adminPassSection" style="display:none;margin-top:6px;">
-      <input type="password" id="adminPassInput" placeholder="Nhập mật khẩu admin"
-        style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #c9ad80;background:#fff;font-size:14px;box-sizing:border-box;">
-      <button class="welcome-close" id="submitAdminPassBtn" style="width:100%;margin-top:12px;background:var(--stamp);">Xác nhận</button>
+
+    <div class="auth-form active" id="authFormLogin">
+      <label>Tên đăng nhập</label>
+      <input type="text" id="userLoginId" placeholder="Tên đăng nhập của bạn" autocomplete="off">
+      <label>Mật khẩu</label>
+      <input type="password" id="userLoginPass" placeholder="Mật khẩu">
+      <div class="auth-error-msg" id="userLoginError">Sai tên đăng nhập hoặc mật khẩu.</div>
+      <button class="welcome-close" id="submitUserLoginBtn" style="width:100%;margin-top:4px;background:var(--violet);">Đăng nhập</button>
     </div>
-    <button class="welcome-close" id="closeLoginBtn" style="margin-top:10px;background:none;color:#5a4d3a;box-shadow:none;">Đóng</button>
+
+    <div class="auth-form" id="authFormRegister">
+      <label>Tên hiển thị</label>
+      <input type="text" id="userRegName" placeholder="Tên của bạn" autocomplete="off">
+      <label>Tên đăng nhập (ID)</label>
+      <input type="text" id="userRegId" placeholder="VD: minh123" autocomplete="off">
+      <label>Mật khẩu</label>
+      <input type="password" id="userRegPass" placeholder="Ít nhất 4 ký tự">
+      <div class="auth-error-msg" id="userRegError">Đã có lỗi xảy ra.</div>
+      <button class="welcome-close" id="submitUserRegBtn" style="width:100%;margin-top:4px;background:var(--violet);">Tạo tài khoản</button>
+    </div>
+
+    <button class="welcome-close" id="closeUserAuthBtn" style="margin-top:10px;background:none;color:#5a4d3a;box-shadow:none;">Đóng</button>
   </div>
 </div>
 
@@ -722,6 +908,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---------------- CONFIG ----------------
+const ADMIN_USERNAME = "adminbuivinh0804";
 const ADMIN_PASSWORD = "hmm_0804";
 
 const firebaseConfig = {
@@ -885,23 +1072,286 @@ async function removePlaylistDoc(id){
   catch(e){ console.error(e); showToast('Lỗi xoá bài hát.'); }
 }
 
+// ---------------- BỘ SƯU TẬP (Collections) ----------------
+async function loadCollections(){
+  if(!db) return [];
+  try{
+    const snap = await getDocs(collection(db, 'collections'));
+    const list = snap.docs.map(d=>d.data());
+    list.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    return list;
+  }catch(e){
+    console.error(e);
+    return [];
+  }
+}
+async function saveCollectionDoc(c){
+  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
+  try{
+    await setDoc(doc(db,'collections', c.id), c);
+    return true;
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi lưu bộ sưu tập: ' + (e && e.message ? e.message : 'không rõ nguyên nhân'));
+    return false;
+  }
+}
+async function removeCollectionDoc(id){
+  if(!db) return;
+  try{ await deleteDoc(doc(db,'collections', id)); }
+  catch(e){ console.error(e); showToast('Lỗi xoá bộ sưu tập.'); }
+}
+
+// ---------------- NGƯỜI DÙNG (User accounts - tách riêng với Admin) ----------------
+// Lưu ý bảo mật: đây là ứng dụng chạy hoàn toàn phía client (không có backend riêng),
+// nên mật khẩu được băm (hash) bằng SHA-256 kèm salt trước khi lưu lên Firestore,
+// thay vì lưu thẳng dạng chữ thường (plain text). Đây KHÔNG phải là bảo mật cấp
+// backend thực sự (ai có quyền đọc Firestore vẫn thấy được hash) — nếu cần an toàn
+// cao hơn, bạn nên giới hạn quyền đọc collection "users" trong Firestore Rules.
+async function hashPassword(password, salt){
+  const enc = new TextEncoder();
+  const data = enc.encode(salt + ':' + password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function normalizeUsername(u){
+  return (u||'').trim().toLowerCase();
+}
+async function loadUserDoc(username){
+  if(!db) return null;
+  try{
+    const snap = await getDoc(doc(db,'users', username));
+    return snap.exists() ? snap.data() : null;
+  }catch(e){ console.error(e); return null; }
+}
+async function saveUserDoc(u){
+  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
+  try{
+    await setDoc(doc(db,'users', u.username), u);
+    return true;
+  }catch(e){
+    console.error(e);
+    showToast('Lỗi lưu tài khoản: ' + (e && e.message ? e.message : 'không rõ nguyên nhân'));
+    return false;
+  }
+}
+
+const CURRENT_USER_KEY = 'currentUserSession';
+function getCurrentUser(){
+  try{
+    const raw = localStorage.getItem(CURRENT_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function setCurrentUser(u){
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(u));
+}
+function clearCurrentUser(){
+  localStorage.removeItem(CURRENT_USER_KEY);
+}
+function isUserLoggedIn(){
+  return !!getCurrentUser();
+}
+
+// renderAuthUI() cập nhật giao diện của nút "loginBtn" duy nhất trên nav,
+// phản ánh 1 trong 3 trạng thái: chưa đăng nhập / đã đăng nhập là khách hàng / đã đăng nhập là Admin.
+function renderAuthUI(){
+  const btn = document.getElementById('loginBtn');
+  const admin = isAdminUnlocked();
+  const cur = getCurrentUser();
+  document.body.classList.toggle('admin-mode', admin);
+  if(admin){
+    btn.textContent = '🔓 ' + (cur && cur.displayName ? cur.displayName : 'Admin') + ' · Thoát';
+  } else if(cur){
+    btn.textContent = '👤 ' + (cur.displayName || cur.username) + ' · Đăng xuất';
+  } else {
+    btn.textContent = 'Đăng ký / Đăng nhập';
+  }
+}
+
+function openUserAuthModal(defaultTab){
+  document.getElementById('userAuthOverlay').style.display = 'flex';
+  switchAuthTab(defaultTab || 'login');
+  document.getElementById('userLoginId').value = '';
+  document.getElementById('userLoginPass').value = '';
+  document.getElementById('userRegName').value = '';
+  document.getElementById('userRegId').value = '';
+  document.getElementById('userRegPass').value = '';
+  document.getElementById('userLoginError').style.display = 'none';
+  document.getElementById('userRegError').style.display = 'none';
+}
+function closeUserAuthModal(){
+  document.getElementById('userAuthOverlay').style.display = 'none';
+}
+function switchAuthTab(tab){
+  const isLogin = tab === 'login';
+  document.getElementById('authTabLoginBtn').classList.toggle('active', isLogin);
+  document.getElementById('authTabRegisterBtn').classList.toggle('active', !isLogin);
+  document.getElementById('authFormLogin').classList.toggle('active', isLogin);
+  document.getElementById('authFormRegister').classList.toggle('active', !isLogin);
+}
+document.getElementById('authTabLoginBtn').addEventListener('click', ()=>switchAuthTab('login'));
+document.getElementById('authTabRegisterBtn').addEventListener('click', ()=>switchAuthTab('register'));
+document.getElementById('closeUserAuthBtn').addEventListener('click', closeUserAuthModal);
+document.getElementById('userAuthOverlay').addEventListener('click', e=>{
+  if(e.target.id === 'userAuthOverlay') closeUserAuthModal();
+});
+
+async function submitUserRegister(){
+  const errEl = document.getElementById('userRegError');
+  errEl.style.display = 'none';
+  const displayName = document.getElementById('userRegName').value.trim();
+  const rawUsername = document.getElementById('userRegId').value.trim();
+  const username = normalizeUsername(rawUsername);
+  const password = document.getElementById('userRegPass').value;
+
+  if(!displayName){ errEl.textContent = 'Vui lòng nhập tên hiển thị.'; errEl.style.display = 'block'; return; }
+  if(!username || !/^[a-z0-9_.]{3,24}$/.test(username)){
+    errEl.textContent = 'Tên đăng nhập cần 3-24 ký tự (chữ, số, _ hoặc .), không dấu.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(username === normalizeUsername(ADMIN_USERNAME)){
+    errEl.textContent = 'Tên đăng nhập này đã được sử dụng.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(!password || password.length < 4){ errEl.textContent = 'Mật khẩu cần ít nhất 4 ký tự.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('submitUserRegBtn');
+  btn.disabled = true;
+  try{
+    const existing = await loadUserDoc(username);
+    if(existing){
+      errEl.textContent = 'Tên đăng nhập này đã được sử dụng.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      return;
+    }
+    const salt = username + '_' + Date.now();
+    const passwordHash = await hashPassword(password, salt);
+    const userDoc = {
+      username, displayName, salt, passwordHash,
+      createdAt: Date.now()
+    };
+    const ok = await saveUserDoc(userDoc);
+    btn.disabled = false;
+    if(!ok) return;
+    setCurrentUser({username, displayName});
+    renderAuthUI();
+    closeUserAuthModal();
+    showToast('Tạo tài khoản thành công! Chào mừng ' + displayName + '.');
+  }catch(e){
+    console.error(e);
+    errEl.textContent = 'Có lỗi xảy ra, thử lại nhé.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+  }
+}
+async function submitUserLogin(){
+  const errEl = document.getElementById('userLoginError');
+  errEl.style.display = 'none';
+  const rawUsername = document.getElementById('userLoginId').value.trim();
+  const password = document.getElementById('userLoginPass').value;
+  if(!rawUsername || !password){
+    errEl.textContent = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('submitUserLoginBtn');
+  btn.disabled = true;
+
+  // 1) Kiểm tra trước xem có phải tài khoản Quản trị (Admin) không.
+  //    So khớp chính xác hoa/thường với thông tin admin cứng trong code.
+  if(rawUsername === ADMIN_USERNAME && password === ADMIN_PASSWORD){
+    localStorage.setItem('siteAdminUnlocked', '1');
+    setCurrentUser({username: ADMIN_USERNAME, displayName: 'Quản trị viên'});
+    renderAuthUI();
+    closeUserAuthModal();
+    btn.disabled = false;
+    showToast('Đã đăng nhập với quyền Admin.');
+    return;
+  }
+
+  // 2) Không phải Admin -> kiểm tra trong danh sách tài khoản người dùng thường.
+  const username = normalizeUsername(rawUsername);
+  try{
+    const userDoc = await loadUserDoc(username);
+    if(!userDoc){
+      errEl.textContent = 'Sai tên đăng nhập hoặc mật khẩu.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      return;
+    }
+    const checkHash = await hashPassword(password, userDoc.salt);
+    if(checkHash !== userDoc.passwordHash){
+      errEl.textContent = 'Sai tên đăng nhập hoặc mật khẩu.';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      return;
+    }
+    setCurrentUser({username: userDoc.username, displayName: userDoc.displayName});
+    renderAuthUI();
+    closeUserAuthModal();
+    btn.disabled = false;
+    showToast('Đăng nhập thành công! Chào mừng trở lại, ' + userDoc.displayName + '.');
+  }catch(e){
+    console.error(e);
+    errEl.textContent = 'Có lỗi xảy ra, thử lại nhé.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+  }
+}
+document.getElementById('submitUserRegBtn').addEventListener('click', submitUserRegister);
+document.getElementById('submitUserLoginBtn').addEventListener('click', submitUserLogin);
+document.getElementById('userLoginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') submitUserLogin(); });
+document.getElementById('userRegPass').addEventListener('keydown', e=>{ if(e.key==='Enter') submitUserRegister(); });
+
 // ---------------- PRODUCTS ----------------
 let products = [];
+let collections = [];
+let activeCollectionFilter = null; // null = tất cả, ngược lại là id bộ sưu tập
+let searchQuery = '';
 let editingId = null;
 let pendingImageData = null; // link ảnh hiện tại (dùng để hiển thị / giữ nguyên nếu không đổi ảnh)
 let pendingImageBlob = null; // file ảnh MỚI được chọn, chờ upload lên Cloudinary khi bấm Lưu
 
+function getCollectionName(id){
+  if(!id) return '';
+  const c = collections.find(x=>x.id===id);
+  return c ? c.name : '';
+}
+
 async function renderProducts(){
   products = await loadProducts();
+  applyFiltersAndRender();
+}
+
+function applyFiltersAndRender(){
   const grid = document.getElementById('productGrid');
-  document.getElementById('countLabel').textContent = products.length;
-  if(products.length===0){
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">Chưa có sản phẩm nào. Nhấn "+ Thêm sản phẩm" để bắt đầu.</div>';
+  let filtered = products;
+  if(activeCollectionFilter){
+    filtered = filtered.filter(p=>p.collectionId === activeCollectionFilter);
+  }
+  const q = searchQuery.trim().toLowerCase();
+  if(q){
+    filtered = filtered.filter(p=>
+      (p.title||'').toLowerCase().includes(q) ||
+      (p.desc||'').toLowerCase().includes(q)
+    );
+  }
+  document.getElementById('countLabel').textContent = filtered.length;
+  if(filtered.length===0){
+    const msg = (q || activeCollectionFilter) ? 'Không tìm thấy sản phẩm phù hợp.' : 'Chưa có sản phẩm nào. Nhấn "+ Thêm sản phẩm" để bắt đầu.';
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${msg}</div>`;
     return;
   }
-  grid.innerHTML = products.map((p,idx)=>`
+  grid.innerHTML = filtered.map((p,idx)=>{
+    const colName = getCollectionName(p.collectionId);
+    return `
     <div class="parcel" style="animation-delay:${Math.min(idx*0.06,0.4)}s; cursor:pointer;" onclick="openProductDetail('${p.id}')">
-      <div class="parcel-tape">Hàng mới</div>
+      <div class="parcel-tape">${escapeHtml(colName || 'Hàng mới')}</div>
       <div class="parcel-img-wrap">
         ${p.image ? `<img class="parcel-img" src="${p.image}" alt="${escapeHtml(p.title)}">` : ''}
       </div>
@@ -915,7 +1365,8 @@ async function renderProducts(){
         </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -930,6 +1381,11 @@ function linkify(text){
   });
 }
 window.claimProduct = function(id){
+  if(!isUserLoggedIn()){
+    showToast('Vui lòng đăng nhập để nhận sản phẩm.');
+    openUserAuthModal('login');
+    return;
+  }
   const p = products.find(x=>x.id===id);
   if(p && p.link) window.open(p.link, '_blank');
   else showToast('Sản phẩm chưa có link nhận.');
@@ -943,6 +1399,14 @@ window.openProductDetail = function(id){
   document.getElementById('modalImg').alt = p.title || '';
   document.getElementById('modalTitle').textContent = p.title || '';
   document.getElementById('modalDesc').innerHTML = linkify(p.desc || '');
+  const tagEl = document.getElementById('modalCollectionTag');
+  const colName = getCollectionName(p.collectionId);
+  if(colName){
+    tagEl.textContent = colName;
+    tagEl.style.display = 'inline-block';
+  } else {
+    tagEl.style.display = 'none';
+  }
   document.getElementById('productModalOverlay').classList.add('open');
 };
 function closeProductDetail(){
@@ -960,6 +1424,151 @@ document.getElementById('modalClaimBtn').addEventListener('click', ()=>{
 document.addEventListener('keydown', e=>{
   if(e.key === 'Escape') closeProductDetail();
 });
+
+// ---------------- TÌM KIẾM ----------------
+const searchInputEl = document.getElementById('searchInput');
+const searchClearBtn = document.getElementById('searchClearBtn');
+const searchWrapEl = document.getElementById('searchWrap');
+const searchSuggestionsEl = document.getElementById('searchSuggestions');
+
+function renderSearchSuggestions(query){
+  const q = query.trim().toLowerCase();
+  if(!q){ searchSuggestionsEl.classList.remove('open'); searchSuggestionsEl.innerHTML=''; return; }
+  const matches = products.filter(p=>
+    (p.title||'').toLowerCase().includes(q) ||
+    (p.desc||'').toLowerCase().includes(q)
+  ).slice(0,6);
+  if(matches.length === 0){
+    searchSuggestionsEl.innerHTML = `<div class="search-suggestion-empty">Không tìm thấy sản phẩm nào khớp với &ldquo;${escapeHtml(query.trim())}&rdquo;</div>`;
+    searchSuggestionsEl.classList.add('open');
+    return;
+  }
+  searchSuggestionsEl.innerHTML = matches.map(p=>{
+    const colName = getCollectionName(p.collectionId);
+    return `
+    <div class="search-suggestion-item" onclick="selectSearchSuggestion('${p.id}')">
+      <div class="search-suggestion-thumb">${p.image ? `<img src="${p.image}" alt="">` : ''}</div>
+      <div class="search-suggestion-info">
+        <div class="search-suggestion-title">${escapeHtml(p.title)}</div>
+        ${colName ? `<div class="search-suggestion-tag">${escapeHtml(colName)}</div>` : ''}
+      </div>
+      <span class="search-suggestion-arrow">→</span>
+    </div>`;
+  }).join('');
+  searchSuggestionsEl.classList.add('open');
+}
+window.selectSearchSuggestion = function(id){
+  searchSuggestionsEl.classList.remove('open');
+  searchInputEl.blur();
+  openProductDetail(id);
+};
+
+searchInputEl.addEventListener('input', e=>{
+  searchQuery = e.target.value;
+  applyFiltersAndRender();
+  renderSearchSuggestions(searchQuery);
+  searchClearBtn.style.display = searchQuery ? 'flex' : 'none';
+});
+searchInputEl.addEventListener('focus', ()=>{
+  searchWrapEl.classList.add('focused');
+  if(searchQuery.trim()) renderSearchSuggestions(searchQuery);
+});
+searchInputEl.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){
+    searchInputEl.blur();
+    searchSuggestionsEl.classList.remove('open');
+  }
+  if(e.key === 'Enter'){
+    const first = searchSuggestionsEl.querySelector('.search-suggestion-item');
+    if(first) first.click();
+  }
+});
+searchClearBtn.addEventListener('click', ()=>{
+  searchQuery = '';
+  searchInputEl.value = '';
+  searchInputEl.focus();
+  applyFiltersAndRender();
+  searchSuggestionsEl.classList.remove('open');
+  searchClearBtn.style.display = 'none';
+});
+document.addEventListener('click', e=>{
+  if(!searchWrapEl.contains(e.target)){
+    searchSuggestionsEl.classList.remove('open');
+    searchWrapEl.classList.remove('focused');
+  }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT'){
+    e.preventDefault();
+    searchInputEl.focus();
+  }
+});
+
+// ---------------- BỘ SƯU TẬP: chip lọc trên trang chủ ----------------
+function renderCollectionChipsUI(){
+  const box = document.getElementById('collectionChips');
+  let html = `<button class="chip ${activeCollectionFilter===null?'active':''}" onclick="setCollectionFilter(null)">Tất cả</button>`;
+  collections.forEach(c=>{
+    html += `<button class="chip ${activeCollectionFilter===c.id?'active':''}" onclick="setCollectionFilter('${c.id}')">
+      ${escapeHtml(c.name)}
+      <span class="chip-remove admin-only" onclick="event.stopPropagation(); deleteCollection('${c.id}')" title="Xoá bộ sưu tập">✕</span>
+    </button>`;
+  });
+  html += `<button class="chip chip-add admin-only" onclick="promptNewCollection()">+ Bộ sưu tập</button>`;
+  box.innerHTML = html;
+}
+window.setCollectionFilter = function(id){
+  activeCollectionFilter = id;
+  renderCollectionChipsUI();
+  applyFiltersAndRender();
+};
+window.deleteCollection = async function(id){
+  if(!checkAdmin()) return;
+  if(!confirm('Xoá bộ sưu tập này? Các sản phẩm trong đó sẽ chuyển về "Chưa phân loại".')) return;
+  await removeCollectionDoc(id);
+  const affected = products.filter(p=>p.collectionId===id);
+  for(const p of affected){
+    p.collectionId = '';
+    await saveProductDoc(p);
+  }
+  if(activeCollectionFilter === id) activeCollectionFilter = null;
+  collections = await loadCollections();
+  renderCollectionChipsUI();
+  applyFiltersAndRender();
+  showToast('Đã xoá bộ sưu tập.');
+};
+window.promptNewCollection = async function(){
+  if(!checkAdmin()) return;
+  const name = prompt('Tên bộ sưu tập mới (VD: Mobile, Áo quần, Tài khoản...):');
+  if(!name || !name.trim()) return;
+  const trimmed = name.trim();
+  const exists = collections.find(c=>c.name.toLowerCase()===trimmed.toLowerCase());
+  if(exists){ showToast('Bộ sưu tập này đã tồn tại.'); return; }
+  const newCol = {id:'c'+Date.now(), name:trimmed, createdAt:Date.now()};
+  const ok = await saveCollectionDoc(newCol);
+  if(ok){
+    collections = await loadCollections();
+    renderCollectionChipsUI();
+    showToast('Đã tạo bộ sưu tập mới!');
+  }
+};
+
+// ---------------- BỘ SƯU TẬP: chọn/tạo trong form sản phẩm ----------------
+function populateCollectionSelect(selectedId){
+  const sel = document.getElementById('pCollection');
+  let html = `<option value="">Chưa phân loại</option>`;
+  collections.forEach(c=>{
+    html += `<option value="${c.id}" ${selectedId===c.id?'selected':''}>${escapeHtml(c.name)}</option>`;
+  });
+  html += `<option value="__new__">+ Tạo bộ sưu tập mới...</option>`;
+  sel.innerHTML = html;
+  document.getElementById('pNewCollectionName').style.display = 'none';
+  document.getElementById('pNewCollectionName').value = '';
+}
+document.getElementById('pCollection').addEventListener('change', e=>{
+  document.getElementById('pNewCollectionName').style.display = e.target.value === '__new__' ? 'block' : 'none';
+});
+
 window.startEdit = function(id){
   if(!checkAdmin()) return;
   const p = products.find(x=>x.id===id);
@@ -972,6 +1581,7 @@ window.startEdit = function(id){
   document.getElementById('pDesc').value = p.desc||'';
   document.getElementById('pLink').value = p.link||'';
   document.getElementById('fileDrop').innerHTML = p.image ? `<img src="${p.image}">` : 'Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)';
+  populateCollectionSelect(p.collectionId||'');
   switchView('form');
 };
 window.deleteProduct = async function(id){
@@ -979,59 +1589,29 @@ window.deleteProduct = async function(id){
   if(!confirm('Xoá sản phẩm này?')) return;
   await removeProductDoc(id);
   products = products.filter(x=>x.id!==id);
-  renderProducts();
+  applyFiltersAndRender();
   showToast('Đã xoá sản phẩm.');
   setTimeout(()=>location.reload(), 400);
 };
 function isAdminUnlocked(){
   return localStorage.getItem('siteAdminUnlocked') === '1';
 }
-function updateAdminUI(){
-  document.body.classList.toggle('admin-mode', isAdminUnlocked());
-  document.getElementById('loginBtn').textContent = isAdminUnlocked() ? '🔓 Thoát admin' : 'Đăng nhập';
-}
-function openLoginModal(){
-  document.getElementById('loginOverlay').style.display = 'flex';
-  document.getElementById('loginChoiceRow').style.display = 'flex';
-  document.getElementById('adminPassSection').style.display = 'none';
-  document.getElementById('adminPassInput').value = '';
-  document.getElementById('loginTitle').textContent = 'Đăng nhập';
-  document.getElementById('loginSubtitle').textContent = 'Bạn đang xem với tư cách nào?';
-}
-function closeLoginModal(){
-  document.getElementById('loginOverlay').style.display = 'none';
-}
+// Nút "loginBtn" duy nhất trên nav giờ dùng chung cho cả Admin lẫn khách hàng:
+// - Chưa đăng nhập gì cả -> mở modal đăng nhập/đăng ký chung.
+// - Đã đăng nhập (Admin hoặc khách hàng) -> bấm để đăng xuất khỏi vai trò hiện tại.
 document.getElementById('loginBtn').addEventListener('click', ()=>{
   if(isAdminUnlocked()){
     localStorage.removeItem('siteAdminUnlocked');
-    updateAdminUI();
+    clearCurrentUser();
+    renderAuthUI();
     showToast('Đã thoát quyền quản trị.');
+  } else if(isUserLoggedIn()){
+    clearCurrentUser();
+    renderAuthUI();
+    showToast('Đã đăng xuất tài khoản.');
   } else {
-    openLoginModal();
+    openUserAuthModal('login');
   }
-});
-document.getElementById('loginViewerBtn').addEventListener('click', closeLoginModal);
-document.getElementById('closeLoginBtn').addEventListener('click', closeLoginModal);
-document.getElementById('loginAdminBtn').addEventListener('click', ()=>{
-  document.getElementById('loginChoiceRow').style.display = 'none';
-  document.getElementById('adminPassSection').style.display = 'block';
-  document.getElementById('loginSubtitle').textContent = 'Nhập mật khẩu quản trị:';
-  document.getElementById('adminPassInput').focus();
-});
-function submitAdminPass(){
-  const pass = document.getElementById('adminPassInput').value;
-  if(pass === ADMIN_PASSWORD){
-    localStorage.setItem('siteAdminUnlocked', '1');
-    updateAdminUI();
-    closeLoginModal();
-    showToast('Đã đăng nhập với quyền Admin.');
-  } else {
-    showToast('Sai mật khẩu.');
-  }
-}
-document.getElementById('submitAdminPassBtn').addEventListener('click', submitAdminPass);
-document.getElementById('adminPassInput').addEventListener('keydown', e=>{
-  if(e.key === 'Enter') submitAdminPass();
 });
 function checkAdmin(){
   return isAdminUnlocked();
@@ -1047,6 +1627,7 @@ document.getElementById('openAddBtn').addEventListener('click', ()=>{
   document.getElementById('pDesc').value = '';
   document.getElementById('pLink').value = '';
   document.getElementById('fileDrop').innerHTML = 'Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)';
+  populateCollectionSelect(activeCollectionFilter || '');
   switchView('form');
 });
 document.getElementById('cancelFormBtn').addEventListener('click', ()=>switchView('home'));
@@ -1076,6 +1657,28 @@ document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
   const saveBtn = document.getElementById('saveProductBtn');
   saveBtn.disabled = true;
 
+  // Xử lý bộ sưu tập: có thể chọn sẵn, để trống, hoặc tạo mới ngay tại đây
+  let collectionId = document.getElementById('pCollection').value;
+  if(collectionId === '__new__'){
+    const newName = document.getElementById('pNewCollectionName').value.trim();
+    if(!newName){
+      showToast('Vui lòng nhập tên bộ sưu tập mới.');
+      saveBtn.disabled = false;
+      return;
+    }
+    const existing = collections.find(c=>c.name.toLowerCase()===newName.toLowerCase());
+    if(existing){
+      collectionId = existing.id;
+    } else {
+      const newCol = {id:'c'+Date.now(), name:newName, createdAt:Date.now()};
+      const okCol = await saveCollectionDoc(newCol);
+      if(!okCol){ saveBtn.disabled = false; return; }
+      collections.push(newCol);
+      collectionId = newCol.id;
+      renderCollectionChipsUI();
+    }
+  }
+
   let imageUrl = pendingImageData;
   if(pendingImageBlob){
     showToast('Đang tải ảnh lên...');
@@ -1092,10 +1695,10 @@ document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
   let productToSave;
   if(editingId){
     const p = products.find(x=>x.id===editingId);
-    p.title = title; p.desc = desc; p.link = link; p.image = imageUrl;
+    p.title = title; p.desc = desc; p.link = link; p.image = imageUrl; p.collectionId = collectionId;
     productToSave = p;
   } else {
-    productToSave = {id: 'p'+Date.now(), title, desc, link, image: imageUrl, createdAt: Date.now()};
+    productToSave = {id: 'p'+Date.now(), title, desc, link, image: imageUrl, collectionId, createdAt: Date.now()};
     products.push(productToSave);
   }
 
@@ -1103,7 +1706,7 @@ document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
   saveBtn.disabled = false;
   if(!ok) return; // lỗi đã hiện toast bên trong saveProductDoc, không reload để mất dấu lỗi
 
-  renderProducts();
+  applyFiltersAndRender();
   switchView('home');
   showToast('Đã lưu sản phẩm!');
   setTimeout(()=>location.reload(), 400);
@@ -1504,7 +2107,9 @@ playerDeleteBtn.addEventListener('click', async (e)=>{
 
 // ---------------- INIT ----------------
 (async function init(){
-  updateAdminUI();
+  renderAuthUI();
+  collections = await loadCollections();
+  renderCollectionChipsUI();
   await renderProducts();
   await renderProfile();
   await renderPlaylistAdmin();
