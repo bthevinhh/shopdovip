@@ -494,7 +494,8 @@
   .player-bar.collapsed .player-disc-wrap{margin:0;}
   .player-bar.collapsed .player-info,
   .player-bar.collapsed .player-controls,
-  .player-bar.collapsed .player-delete-btn{display:none;}
+  .player-bar.collapsed .player-delete-btn,
+  .player-bar.collapsed .player-extra-row{display:none;}
   .player-delete-btn{
     position:absolute;top:8px;right:10px;
     width:22px;height:22px;border-radius:50%;
@@ -510,6 +511,7 @@
     background:var(--ink);padding:3px;
     box-shadow:0 10px 24px -8px rgba(0,0,0,.5);
     margin:-46px auto 10px;
+    cursor:pointer;
   }
   .player-disc{
     width:100%;height:100%;border-radius:50%;
@@ -561,7 +563,7 @@
     box-shadow:0 1px 3px rgba(0,0,0,.5);
   }
   .player-controls{
-    display:flex;align-items:center;justify-content:center;gap:22px;
+    display:flex;align-items:center;justify-content:center;gap:18px;
     margin-top:10px;padding-top:10px;
     border-top:1px solid rgba(255,255,255,.08);
   }
@@ -569,6 +571,7 @@
     background:none;border:none;color:var(--text-light);cursor:pointer;
     display:flex;align-items:center;justify-content:center;
     padding:4px;opacity:.7;transition:.15s;
+    position:relative;
   }
   .player-btn:hover{opacity:1;}
   .player-btn.play-btn{
@@ -576,7 +579,58 @@
     background:var(--amber);color:var(--text-dark);opacity:1;
   }
   .player-btn.play-btn:hover{background:var(--stamp);color:#fff;}
+  .player-btn.toggled{opacity:1;color:var(--amber);}
+  .player-btn.toggled::after{
+    content:'';position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);
+    width:4px;height:4px;border-radius:50%;background:var(--amber);
+  }
   .player-empty-hint{font-size:11.5px;color:var(--muted);text-align:center;padding:6px 0;}
+  .player-extra-row{
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    margin-top:8px;padding-top:8px;
+    border-top:1px solid rgba(255,255,255,.06);
+  }
+  .player-volume-wrap{
+    display:flex;align-items:center;gap:6px;flex:1;
+  }
+  .player-volume-wrap .player-btn{padding:2px;}
+  .player-volume{
+    flex:1;-webkit-appearance:none;appearance:none;
+    height:3px;border-radius:2px;background:var(--crate-line);
+    outline:none;cursor:pointer;accent-color:var(--amber-soft);
+  }
+  .player-volume::-webkit-slider-thumb{
+    -webkit-appearance:none;width:9px;height:9px;border-radius:50%;
+    background:var(--amber-soft);cursor:pointer;
+  }
+
+  /* ---------- QUEUE MODAL ---------- */
+  .queue-overlay{
+    position:fixed;inset:0;z-index:65;
+    background:rgba(10,8,14,.6);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    display:none;align-items:flex-end;justify-content:flex-end;
+    padding:26px;
+  }
+  .queue-overlay.open{display:flex;}
+  .queue-box{
+    background:var(--crate);border:1px solid rgba(255,255,255,.1);
+    border-radius:18px;width:320px;max-width:calc(100vw - 52px);
+    max-height:60vh;overflow-y:auto;padding:16px;
+    box-shadow:0 24px 60px -20px rgba(0,0,0,.6);
+    animation:popin .3s var(--ease);
+    margin-bottom:112px;
+  }
+  .queue-box h4{font-family:'Space Mono',monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:10px;}
+  .queue-item{
+    display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:10px;cursor:pointer;transition:.15s;
+  }
+  .queue-item:hover{background:rgba(255,255,255,.06);}
+  .queue-item.active{background:rgba(240,169,60,.14);}
+  .queue-item-cover{width:36px;height:36px;border-radius:8px;flex:0 0 36px;object-fit:cover;background:var(--crate-line);}
+  .queue-item-info{flex:1;min-width:0;}
+  .queue-item-title{font-size:12.5px;font-weight:600;color:var(--text-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .queue-item-artist{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
   /* ---------- PLAYLIST MANAGER (trang hồ sơ) ---------- */
   .playlist-card{
@@ -642,12 +696,19 @@
     font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
     background:rgba(0,0,0,.08);color:var(--stamp);padding:6px 14px;border-radius:50px;margin-bottom:12px;
   }
+  .modal-stats-row{
+    display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;
+  }
+  .modal-stat{
+    font-family:'Space Mono',monospace;font-size:11px;color:#8a7a5c;
+    display:flex;align-items:center;gap:5px;
+  }
   .product-modal-body h2{font-size:26px;line-height:1.2;margin-bottom:14px;}
   .product-modal-desc{
     font-size:14.5px;color:#5a4d3a;line-height:1.65;
     white-space:pre-wrap;flex:1;
   }
-  .product-modal-actions{display:flex;gap:10px;margin-top:24px;}
+  .product-modal-actions{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;}
   .product-modal-close{
     position:absolute;top:16px;right:16px;
     width:36px;height:36px;border-radius:50%;
@@ -657,10 +718,188 @@
     transition:.15s;
   }
   .product-modal-close:hover{background:rgba(0,0,0,.18);}
+  .icon-btn{
+    background:rgba(0,0,0,.06);border:none;color:var(--text-dark);
+    width:44px;height:44px;border-radius:11px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:.18s var(--ease);
+    flex:0 0 auto;
+  }
+  .icon-btn:hover{background:rgba(0,0,0,.12);}
+  .icon-btn.active{background:var(--stamp);color:#fff;}
+  .related-products-block{margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.08);}
+  .related-products-block h4{
+    font-family:'Space Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:#8a7a5c;margin-bottom:12px;
+  }
+  .related-products-grid{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;}
+  .related-product-card{
+    flex:0 0 130px;cursor:pointer;border-radius:12px;overflow:hidden;background:rgba(0,0,0,.04);
+    transition:.15s;
+  }
+  .related-product-card:hover{transform:translateY(-3px);}
+  .related-product-card img{width:100%;height:90px;object-fit:cover;display:block;background:#d8c19a;}
+  .related-product-card .rp-title{
+    font-size:11.5px;font-weight:600;padding:7px 8px;color:var(--text-dark);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
   @media (max-width:560px){
     .product-modal{flex-direction:column;max-height:92vh;}
     .product-modal-img-wrap{width:100%;flex:0 0 auto;aspect-ratio:16/10;}
     .product-modal-body{padding:24px 22px;}
+  }
+
+  /* ---------- HOT / FEATURED BADGE ---------- */
+  .hot-badge{
+    position:absolute;top:14px;right:14px;z-index:2;
+    font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+    background:linear-gradient(135deg,var(--stamp),#ff7a55);color:#fff;
+    padding:5px 11px;border-radius:50px;
+    box-shadow:0 4px 12px -2px rgba(232,92,65,.6);
+    display:flex;align-items:center;gap:4px;
+  }
+  .new-badge{
+    position:absolute;top:14px;right:14px;z-index:2;
+    font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+    background:linear-gradient(135deg,var(--violet),#9a8cf5);color:#fff;
+    padding:5px 11px;border-radius:50px;
+    box-shadow:0 4px 12px -2px rgba(124,108,240,.6);
+    display:flex;align-items:center;gap:4px;
+  }
+  .parcel.has-hot .new-badge{top:48px;}
+  .pin-btn{
+    background:rgba(0,0,0,.06);border:none;color:var(--text-dark);
+    padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;
+    transition:.15s;
+  }
+  .pin-btn:hover{background:rgba(0,0,0,.12);}
+  .pin-btn.pinned{background:var(--stamp);color:#fff;}
+
+  /* ---------- FAVORITES ---------- */
+  .fav-btn-card{
+    position:absolute;top:14px;right:14px;z-index:3;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(255,255,255,.85);border:none;color:#c23a22;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    box-shadow:0 4px 10px -2px rgba(0,0,0,.3);
+    transition:.18s var(--ease);
+  }
+  .fav-btn-card:hover{transform:scale(1.1);}
+  .fav-btn-card.active svg{fill:#c23a22;}
+  .parcel.has-hot .fav-btn-card{top:48px;}
+  .parcel.has-hot.has-new .fav-btn-card{top:82px;}
+
+  /* ---------- SORT BAR ---------- */
+  .sort-row{
+    display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;
+  }
+  .sort-row select{
+    background:rgba(255,255,255,.045);border:1.5px solid var(--crate-line);color:var(--text-light);
+    font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+    padding:9px 14px;border-radius:10px;cursor:pointer;
+  }
+  .sort-row select option{background:var(--crate);color:var(--text-light);}
+  .fav-filter-btn{
+    font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+    background:rgba(255,255,255,.045);border:1.5px solid rgba(255,255,255,.1);color:var(--muted);
+    padding:9px 16px;border-radius:50px;cursor:pointer;transition:.18s var(--ease);
+    display:flex;align-items:center;gap:6px;
+  }
+  .fav-filter-btn:hover{color:var(--text-light);border-color:rgba(255,255,255,.25);}
+  .fav-filter-btn.active{background:var(--stamp);color:#fff;border-color:var(--stamp);}
+
+  /* ---------- BULK ACTIONS BAR ---------- */
+  .bulk-toggle-btn{
+    font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+    background:rgba(255,255,255,.045);border:1.5px solid rgba(255,255,255,.12);color:var(--muted);
+    padding:9px 16px;border-radius:10px;cursor:pointer;transition:.18s;
+  }
+  .bulk-toggle-btn:hover{color:var(--text-light);}
+  .bulk-toggle-btn.active{background:var(--violet);color:#fff;border-color:var(--violet);}
+  .bulk-bar{
+    display:none;
+    position:sticky;top:78px;z-index:22;
+    background:var(--crate);border:1.5px solid var(--violet);
+    border-radius:14px;padding:12px 16px;margin-bottom:18px;
+    align-items:center;gap:12px;flex-wrap:wrap;
+    box-shadow:0 14px 30px -14px rgba(0,0,0,.5);
+    animation:popin .3s var(--ease);
+  }
+  .bulk-bar.show{display:flex;}
+  .bulk-bar .label{color:var(--text-light);font-weight:400;letter-spacing:0;text-transform:none;font-size:13px;flex:1;}
+  .bulk-bar .label b{color:var(--violet);}
+  .bulk-bar select{
+    background:rgba(255,255,255,.06);border:1.5px solid var(--crate-line);color:var(--text-light);
+    font-family:'Space Mono',monospace;font-size:11.5px;padding:8px 12px;border-radius:9px;cursor:pointer;
+  }
+  .bulk-bar select option{background:var(--crate);color:var(--text-light);}
+  .bulk-bar-btn{
+    font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+    padding:9px 14px;border-radius:9px;cursor:pointer;border:none;
+  }
+  .bulk-apply-btn{background:var(--violet);color:#fff;}
+  .bulk-delete-btn{background:var(--stamp);color:#fff;}
+  .bulk-cancel-btn{background:rgba(255,255,255,.08);color:var(--muted);}
+  .card-select-box{
+    display:none;position:absolute;top:14px;left:14px;z-index:4;
+    width:26px;height:26px;border-radius:8px;
+    background:rgba(255,255,255,.9);border:2px solid var(--text-dark);
+    align-items:center;justify-content:center;cursor:pointer;
+  }
+  body.bulk-mode .card-select-box{display:flex;}
+  body.bulk-mode .parcel{cursor:pointer;}
+  .card-select-box.checked{background:var(--violet);border-color:var(--violet);color:#fff;}
+  .parcel.selected{outline:3px solid var(--violet);outline-offset:2px;}
+
+  /* ---------- SKELETON LOADING ---------- */
+  .skeleton-parcel{
+    background:rgba(255,255,255,.04);
+    border-radius:18px;
+    display:flex;flex-direction:row;overflow:hidden;
+    height:150px;
+  }
+  .skeleton-img{width:38%;flex:0 0 38%;background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;}
+  .skeleton-body{flex:1;padding:18px;display:flex;flex-direction:column;gap:10px;justify-content:center;}
+  .skeleton-line{height:12px;border-radius:6px;background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;}
+  .skeleton-line.w60{width:60%;height:16px;}
+  .skeleton-line.w90{width:90%;}
+  .skeleton-line.w40{width:40%;}
+  @keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+  /* ---------- CONFIRM / PROMPT MODAL ---------- */
+  .confirm-overlay{
+    position:fixed;inset:0;z-index:70;
+    background:rgba(10,8,14,.72);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;padding:20px;
+    animation:fadein .25s var(--ease);
+  }
+  .confirm-overlay.open{display:flex;}
+  .confirm-box{
+    background:linear-gradient(160deg,var(--kraft),var(--kraft-dark));
+    color:var(--text-dark);
+    padding:32px 30px;border-radius:20px;max-width:380px;width:100%;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,.6);
+    animation:popin .35s var(--ease);
+  }
+  .confirm-box h3{font-size:19px;margin-bottom:10px;}
+  .confirm-box p{font-size:13.5px;color:#5a4d3a;line-height:1.55;margin:0 0 6px;}
+  .confirm-box input[type=text]{
+    width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid #c9ad80;background:#fff;
+    font-size:14px;box-sizing:border-box;margin-top:10px;font-family:'Inter',sans-serif;
+  }
+  .confirm-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
+  .confirm-btn-ok{
+    background:var(--text-dark);color:var(--kraft);border:none;
+    font-family:'Space Mono',monospace;text-transform:uppercase;font-size:12px;letter-spacing:.06em;font-weight:700;
+    padding:11px 22px;border-radius:50px;cursor:pointer;transition:.18s var(--ease);
+  }
+  .confirm-btn-ok:hover{background:var(--stamp);}
+  .confirm-btn-ok.danger{background:var(--stamp);}
+  .confirm-btn-ok.danger:hover{background:#c23a22;}
+  .confirm-btn-cancel{
+    background:none;border:1.5px solid #c9ad80;color:#5a4d3a;
+    font-family:'Space Mono',monospace;text-transform:uppercase;font-size:12px;letter-spacing:.06em;font-weight:700;
+    padding:11px 22px;border-radius:50px;cursor:pointer;
   }
 
   /* ---------- TOAST ---------- */
@@ -674,13 +913,54 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+  /* ---------- DASHBOARD (admin) ---------- */
+  .dashboard-card{
+    background:var(--crate);border:1px solid rgba(255,255,255,.08);
+    border-radius:22px;padding:28px 30px;max-width:640px;margin:0 auto 20px;
+    box-shadow:0 24px 60px -24px rgba(0,0,0,.6);
+  }
+  .dashboard-card h3{font-size:18px;margin-bottom:16px;}
+  .dashboard-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+  .dashboard-stat-box{
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+    border-radius:14px;padding:16px 14px;text-align:center;
+  }
+  .dashboard-stat-num{font-family:'Fraunces',serif;font-size:26px;font-weight:700;color:var(--amber);}
+  .dashboard-stat-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+  .dashboard-top-list{display:flex;flex-direction:column;gap:2px;}
+  .dashboard-top-row{
+    display:flex;align-items:center;gap:10px;padding:9px 4px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .dashboard-top-row:last-child{border-bottom:none;}
+  .dashboard-top-rank{
+    font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:var(--amber-soft);
+    width:20px;flex:0 0 20px;text-align:center;
+  }
+  .dashboard-top-cover{width:34px;height:34px;border-radius:8px;flex:0 0 34px;object-fit:cover;background:var(--crate-line);}
+  .dashboard-top-name{flex:1;min-width:0;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dashboard-top-views{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);}
+  .dashboard-actions-row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;}
+
+  /* ---------- SCHEDULE FIELDS ---------- */
+  .schedule-row{display:flex;gap:10px;}
+  .schedule-row > div{flex:1;}
+  .schedule-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+    background:rgba(124,108,240,.15);color:var(--violet);
+    padding:4px 10px;border-radius:50px;margin-top:6px;
+  }
+
   @media (max-width:520px){
     header{padding:16px 20px;}
     main{padding:32px 18px 90px;}
     .profile-top{flex-direction:column;text-align:center;}
     .id-tag{position:static;display:inline-block;margin-bottom:12px;}
-    .profile-card, .form-card, .playlist-card{padding:26px;border-radius:18px;}
+    .profile-card, .form-card, .playlist-card, .dashboard-card{padding:26px;border-radius:18px;}
     .player-bar{left:16px;right:16px;width:auto;bottom:16px;}
+    .bulk-bar{top:70px;}
+    .dashboard-stats-row{grid-template-columns:repeat(3,1fr);gap:8px;}
   }
 </style>
 </head>
@@ -702,7 +982,10 @@
   <section class="view active" id="view-home">
     <div class="home-top">
       <div class="label">Kệ hàng &mdash; <span id="countLabel">0</span> sản phẩm</div>
-      <button class="add-btn admin-only" id="openAddBtn">+ Thêm sản phẩm</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="bulk-toggle-btn admin-only" id="bulkToggleBtn">☑ Chọn nhiều</button>
+        <button class="add-btn admin-only" id="openAddBtn">+ Thêm sản phẩm</button>
+      </div>
     </div>
     <div class="search-row">
       <div class="search-wrap" id="searchWrap">
@@ -717,7 +1000,27 @@
       </div>
     </div>
     <div class="collection-chips" id="collectionChips"></div>
+    <div class="sort-row">
+      <select id="sortSelect">
+        <option value="newest">Mới nhất</option>
+        <option value="oldest">Cũ nhất</option>
+        <option value="name-asc">Tên A-Z</option>
+        <option value="name-desc">Tên Z-A</option>
+        <option value="popular">Xem nhiều nhất</option>
+      </select>
+      <button class="fav-filter-btn" id="favFilterBtn">♥ Yêu thích</button>
+    </div>
+    <div class="bulk-bar" id="bulkBar">
+      <span class="label"><b id="bulkCount">0</b> sản phẩm đã chọn</span>
+      <select id="bulkCollectionSelect"></select>
+      <button class="bulk-bar-btn bulk-apply-btn" id="bulkApplyBtn">Gán bộ sưu tập</button>
+      <button class="bulk-bar-btn bulk-delete-btn" id="bulkDeleteBtn">Xoá đã chọn</button>
+      <button class="bulk-bar-btn bulk-cancel-btn" id="bulkCancelBtn">Huỷ</button>
+    </div>
     <div class="grid" id="productGrid"></div>
+    <div id="loadMoreWrap" style="text-align:center;margin-top:24px;display:none;">
+      <button class="ghost-btn" id="loadMoreBtn">Xem thêm sản phẩm</button>
+    </div>
   </section>
 
   <!-- ADD/EDIT PRODUCT -->
@@ -736,9 +1039,25 @@
       <label>Bộ sưu tập</label>
       <select id="pCollection"></select>
       <input type="text" id="pNewCollectionName" placeholder="Nhập tên bộ sưu tập mới..." style="display:none;margin-top:8px;">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <input type="checkbox" id="pPinned" style="width:auto;">
+        <span style="margin:0;">Ghim làm sản phẩm nổi bật (Hot 🔥)</span>
+      </label>
+      <label>Lịch ẩn/hiện (tuỳ chọn)</label>
+      <div class="schedule-row">
+        <div>
+          <span class="label" style="margin:0 0 6px;">Hiện từ</span>
+          <input type="text" id="pVisibleFrom" placeholder="YYYY-MM-DD (để trống = ngay)">
+        </div>
+        <div>
+          <span class="label" style="margin:0 0 6px;">Tự ẩn sau</span>
+          <input type="text" id="pVisibleUntil" placeholder="YYYY-MM-DD (để trống = không ẩn)">
+        </div>
+      </div>
       <div class="form-actions">
         <button class="primary-btn" id="saveProductBtn">Lưu sản phẩm</button>
         <button class="ghost-btn" id="cancelFormBtn">Huỷ</button>
+        <button class="ghost-btn admin-only" id="undoEditBtn" style="display:none;">↩ Hoàn tác về bản trước</button>
       </div>
     </div>
   </section>
@@ -767,6 +1086,31 @@
 
   <!-- PROFILE -->
   <section class="view" id="view-profile">
+    <div class="dashboard-card admin-only" id="dashboardCard">
+      <h3>📊 Bảng điều khiển</h3>
+      <div class="dashboard-stats-row">
+        <div class="dashboard-stat-box">
+          <div class="dashboard-stat-num" id="dashTotalProducts">0</div>
+          <div class="dashboard-stat-label">Sản phẩm</div>
+        </div>
+        <div class="dashboard-stat-box">
+          <div class="dashboard-stat-num" id="dashTotalViews">0</div>
+          <div class="dashboard-stat-label">Lượt xem</div>
+        </div>
+        <div class="dashboard-stat-box">
+          <div class="dashboard-stat-num" id="dashTotalClaims">0</div>
+          <div class="dashboard-stat-label">Lượt nhận</div>
+        </div>
+      </div>
+      <span class="label" style="display:block;margin-bottom:8px;">TOP 5 SẢN PHẨM HOT NHẤT</span>
+      <div class="dashboard-top-list" id="dashboardTopList"></div>
+      <div class="dashboard-actions-row">
+        <button class="ghost-btn" id="exportJsonBtn">⬇ Export JSON</button>
+        <button class="ghost-btn" id="importJsonBtn">⬆ Import JSON</button>
+        <input type="file" id="importJsonInput" accept="application/json" style="display:none;">
+      </div>
+    </div>
+
     <div class="profile-card" id="profileView">
       <div class="id-tag">Chủ kho</div>
       <div class="profile-top">
@@ -786,6 +1130,12 @@
       <span class="label">PHÁT NHẠC KHI GHÉ THĂM</span>
       <div id="playlistList"></div>
       <button class="add-btn admin-only playlist-add-btn" id="openAddSongBtn">+ Thêm bài hát</button>
+    </div>
+
+    <div class="playlist-card" id="favoritesCard">
+      <h3>Sản phẩm yêu thích</h3>
+      <span class="label">CẦN ĐĂNG NHẬP ĐỂ LƯU</span>
+      <div id="favoritesList"></div>
     </div>
 
     <div class="form-card" id="profileEditForm" style="display:none;margin-top:20px;">
@@ -816,7 +1166,7 @@
 <audio id="bgAudio" style="display:none;"></audio>
 <div class="player-bar hidden" id="playerBar">
   <button class="player-delete-btn" id="playerDeleteBtn" title="Xoá bài này">✕</button>
-  <div class="player-disc-wrap">
+  <div class="player-disc-wrap" id="playerDiscWrap" title="Xem danh sách phát">
     <div class="player-disc" id="playerDisc"><img id="playerDiscImg" src="" alt="" style="display:none;"></div>
   </div>
   <div class="player-info">
@@ -829,6 +1179,9 @@
     </div>
   </div>
   <div class="player-controls">
+    <button class="player-btn" id="playerShuffleBtn" title="Phát ngẫu nhiên">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3h4v4h-2V6.41l-3.29 3.3-1.42-1.42L17.59 5H17V3zM3 5h5.17l6 6-1.41 1.41L7.17 7H3V5zm14 16h4v-4h-2v1.59l-3.29-3.3-1.42 1.42L17.59 20H17v1zM3 19h5.17l9-9-1.41-1.41L7.17 17H3v2z"/></svg>
+    </button>
     <button class="player-btn" id="playerPrevBtn" title="Bài trước">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
     </button>
@@ -838,23 +1191,53 @@
     <button class="player-btn" id="playerNextBtn" title="Bài tiếp theo">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
     </button>
+    <button class="player-btn" id="playerRepeatBtn" title="Lặp lại bài này">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+    </button>
+  </div>
+  <div class="player-extra-row">
+    <div class="player-volume-wrap">
+      <button class="player-btn" id="playerMuteBtn" title="Tắt/bật tiếng">
+        <svg id="playerVolIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4.03v8.05A4.5 4.5 0 0 0 16.5 12z"/></svg>
+      </button>
+      <input type="range" class="player-volume" id="playerVolume" min="0" max="100" value="50">
+    </div>
   </div>
 </div>
+
+<div class="queue-overlay" id="queueOverlay">
+  <div class="queue-box">
+    <h4>Danh sách phát</h4>
+    <div id="queueList"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="product-modal-overlay" id="productModalOverlay">
   <div class="product-modal">
     <button class="product-modal-close" id="closeProductModalBtn">✕</button>
     <div class="product-modal-img-wrap">
-      <img id="modalImg" src="" alt="">
+      <img id="modalImg" src="" alt="" loading="lazy">
     </div>
     <div class="product-modal-body">
       <div class="modal-collection-tag" id="modalCollectionTag"></div>
       <h2 id="modalTitle"></h2>
+      <div class="modal-stats-row" id="modalStatsRow"></div>
       <div class="product-modal-desc" id="modalDesc"></div>
       <div class="product-modal-actions">
         <button class="primary-btn" id="modalClaimBtn">Nhận sản phẩm</button>
+        <button class="icon-btn" id="modalCopyBtn" title="Copy link nhận">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+        <button class="icon-btn" id="modalFavBtn" title="Yêu thích">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        </button>
         <button class="ghost-btn" id="modalCloseBtn2">Đóng</button>
+      </div>
+      <div class="related-products-block" id="relatedProductsBlock" style="display:none;">
+        <h4>Sản phẩm cùng bộ sưu tập</h4>
+        <div class="related-products-grid" id="relatedProductsGrid"></div>
       </div>
     </div>
   </div>
@@ -901,10 +1284,22 @@
   </div>
 </div>
 
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Xác nhận</h3>
+    <p id="confirmMessage">Bạn có chắc chắn không?</p>
+    <input type="text" id="confirmInput" style="display:none;">
+    <div class="confirm-actions">
+      <button class="confirm-btn-cancel" id="confirmCancelBtn">Huỷ</button>
+      <button class="confirm-btn-ok" id="confirmOkBtn">Đồng ý</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ---------------- CONFIG ----------------
@@ -966,6 +1361,68 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
   b.addEventListener('click', ()=>switchView(b.dataset.view));
 });
 
+// ---------------- MODAL CONFIRM / PROMPT (thay thế confirm()/prompt() gốc của trình duyệt) ----------------
+function askConfirm({title='Xác nhận', message='Bạn có chắc chắn không?', okText='Đồng ý', danger=false} = {}){
+  return new Promise(resolve=>{
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    const inputEl = document.getElementById('confirmInput');
+    inputEl.style.display = 'none';
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = okText;
+    okBtn.classList.toggle('danger', !!danger);
+    overlay.classList.add('open');
+    function cleanup(result){
+      overlay.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      resolve(result);
+    }
+    function onOk(){ cleanup(true); }
+    function onCancel(){ cleanup(false); }
+    function onOverlay(e){ if(e.target.id==='confirmOverlay') cleanup(false); }
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
+  });
+}
+function askPrompt({title='Nhập thông tin', message='', placeholder='', okText='Xác nhận'} = {}){
+  return new Promise(resolve=>{
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    const inputEl = document.getElementById('confirmInput');
+    inputEl.style.display = 'block';
+    inputEl.value = '';
+    inputEl.placeholder = placeholder;
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = okText;
+    okBtn.classList.remove('danger');
+    overlay.classList.add('open');
+    setTimeout(()=>inputEl.focus(), 60);
+    function cleanup(result){
+      overlay.classList.remove('open');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlay);
+      inputEl.removeEventListener('keydown', onKey);
+      resolve(result);
+    }
+    function onOk(){ cleanup(inputEl.value.trim() || null); }
+    function onCancel(){ cleanup(null); }
+    function onOverlay(e){ if(e.target.id==='confirmOverlay') cleanup(null); }
+    function onKey(e){ if(e.key==='Enter') onOk(); if(e.key==='Escape') onCancel(); }
+    const cancelBtn = document.getElementById('confirmCancelBtn');
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlay);
+    inputEl.addEventListener('keydown', onKey);
+  });
+}
+
 // Nén ảnh và trả về CẢ preview (data URL, chỉ để xem trước) LẪN blob (để upload lên Cloudinary).
 // Trước đây ảnh được lưu thẳng dạng base64 vào Firestore -> dễ vượt quá giới hạn 1MB/document
 // của Firestore và bị lưu lỗi âm thầm, khiến ảnh "biến mất" sau khi upload.
@@ -996,12 +1453,29 @@ function compressImageToBlob(file, maxW=700, quality=0.72){
 }
 
 // ---------------- STORAGE (Firebase Firestore) ----------------
-async function loadProducts(){
+const PRODUCTS_CACHE_KEY = 'productsCacheV1';
+const PRODUCTS_CACHE_TTL = 3 * 60 * 1000; // 3 phút
+
+async function loadProducts(forceFresh){
   if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return []; }
+  if(!forceFresh){
+    try{
+      const raw = sessionStorage.getItem(PRODUCTS_CACHE_KEY);
+      if(raw){
+        const cached = JSON.parse(raw);
+        if(cached && (Date.now() - cached.ts) < PRODUCTS_CACHE_TTL && Array.isArray(cached.list)){
+          return cached.list;
+        }
+      }
+    }catch(e){ /* bỏ qua lỗi cache, tải lại từ Firestore */ }
+  }
   try{
     const snap = await getDocs(collection(db, 'products'));
     const list = snap.docs.map(d=>d.data());
     list.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    try{
+      sessionStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify({ts:Date.now(), list}));
+    }catch(e){ /* sessionStorage đầy hoặc bị chặn, bỏ qua cache */ }
     return list;
   }catch(e){
     console.error(e);
@@ -1009,10 +1483,14 @@ async function loadProducts(){
     return [];
   }
 }
+function invalidateProductsCache(){
+  try{ sessionStorage.removeItem(PRODUCTS_CACHE_KEY); }catch(e){}
+}
 async function saveProductDoc(p){
   if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
   try{
     await setDoc(doc(db,'products', p.id), p);
+    invalidateProductsCache();
     return true;
   }catch(e){
     console.error(e);
@@ -1022,8 +1500,19 @@ async function saveProductDoc(p){
 }
 async function removeProductDoc(id){
   if(!db) return;
-  try{ await deleteDoc(doc(db,'products', id)); }
+  try{ await deleteDoc(doc(db,'products', id)); invalidateProductsCache(); }
   catch(e){ console.error(e); showToast('Lỗi xoá sản phẩm.'); }
+}
+async function bumpProductStat(id, field){
+  if(!db) return;
+  try{
+    await updateDoc(doc(db,'products', id), {[field]: increment(1)});
+    invalidateProductsCache();
+  }catch(e){
+    // Nếu field chưa tồn tại trên document cũ, updateDoc vẫn tạo được nhờ increment(),
+    // nhưng nếu document chưa từng có field này ở lần đầu, ta bỏ qua lỗi âm thầm để không làm phiền người dùng.
+    console.warn('Không cập nhật được thống kê:', e);
+  }
 }
 async function loadProfile(){
   if(!db) return null;
@@ -1070,6 +1559,29 @@ async function removePlaylistDoc(id){
   if(!db) return;
   try{ await deleteDoc(doc(db,'playlist', id)); }
   catch(e){ console.error(e); showToast('Lỗi xoá bài hát.'); }
+}
+
+// ---------------- LỊCH SỬ CHỈNH SỬA (Edit history / Undo) ----------------
+// Lưu bản sao sản phẩm TRƯỚC khi sửa vào 1 collection riêng "productHistory",
+// key theo id sản phẩm — chỉ giữ bản gần nhất trước lần sửa cuối để nhẹ dữ liệu.
+async function saveProductHistorySnapshot(product){
+  if(!db || !product) return;
+  try{
+    await setDoc(doc(db,'productHistory', product.id), {...product, savedAt: Date.now()});
+  }catch(e){
+    console.warn('Không lưu được lịch sử chỉnh sửa:', e);
+  }
+}
+async function loadProductHistorySnapshot(id){
+  if(!db) return null;
+  try{
+    const snap = await getDoc(doc(db,'productHistory', id));
+    return snap.exists() ? snap.data() : null;
+  }catch(e){ console.error(e); return null; }
+}
+async function removeProductHistorySnapshot(id){
+  if(!db) return;
+  try{ await deleteDoc(doc(db,'productHistory', id)); }catch(e){ /* bỏ qua */ }
 }
 
 // ---------------- BỘ SƯU TẬP (Collections) ----------------
@@ -1241,6 +1753,7 @@ async function submitUserRegister(){
     renderAuthUI();
     closeUserAuthModal();
     showToast('Tạo tài khoản thành công! Chào mừng ' + displayName + '.');
+    renderFavoritesUI();
   }catch(e){
     console.error(e);
     errEl.textContent = 'Có lỗi xảy ra, thử lại nhé.';
@@ -1271,6 +1784,9 @@ async function submitUserLogin(){
     closeUserAuthModal();
     btn.disabled = false;
     showToast('Đã đăng nhập với quyền Admin.');
+    applyFiltersAndRender();
+    renderCollectionChipsUI();
+    renderDashboard();
     return;
   }
 
@@ -1296,6 +1812,8 @@ async function submitUserLogin(){
     closeUserAuthModal();
     btn.disabled = false;
     showToast('Đăng nhập thành công! Chào mừng trở lại, ' + userDoc.displayName + '.');
+    renderFavoritesUI();
+    applyFiltersAndRender();
   }catch(e){
     console.error(e);
     errEl.textContent = 'Có lỗi xảy ra, thử lại nhé.';
@@ -1308,6 +1826,73 @@ document.getElementById('submitUserLoginBtn').addEventListener('click', submitUs
 document.getElementById('userLoginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') submitUserLogin(); });
 document.getElementById('userRegPass').addEventListener('keydown', e=>{ if(e.key==='Enter') submitUserRegister(); });
 
+// ---------------- YÊU THÍCH (Favorites) ----------------
+// Lưu theo từng user vào localStorage (khoá theo username) để đơn giản, không cần thêm collection Firestore.
+function favKey(){
+  const cur = getCurrentUser();
+  return cur ? ('favorites_' + cur.username) : null;
+}
+function getFavorites(){
+  const key = favKey();
+  if(!key) return [];
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function setFavorites(list){
+  const key = favKey();
+  if(!key) return;
+  localStorage.setItem(key, JSON.stringify(list));
+}
+function isFavorite(id){
+  return getFavorites().includes(id);
+}
+window.toggleFavorite = function(id){
+  if(!isUserLoggedIn()){
+    showToast('Vui lòng đăng nhập để lưu yêu thích.');
+    openUserAuthModal('login');
+    return;
+  }
+  let favs = getFavorites();
+  if(favs.includes(id)){
+    favs = favs.filter(x=>x!==id);
+    showToast('Đã bỏ yêu thích.');
+  } else {
+    favs.push(id);
+    showToast('Đã thêm vào yêu thích ♥');
+  }
+  setFavorites(favs);
+  applyFiltersAndRender();
+  renderFavoritesUI();
+  if(currentModalProductId === id) updateModalFavButton(id);
+};
+function renderFavoritesUI(){
+  const list = document.getElementById('favoritesList');
+  if(!isUserLoggedIn()){
+    list.innerHTML = '<div class="label" style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);padding:8px 0;">Đăng nhập để xem danh sách yêu thích của bạn.</div>';
+    return;
+  }
+  const favs = getFavorites();
+  const favProducts = products.filter(p=>favs.includes(p.id));
+  if(favProducts.length === 0){
+    list.innerHTML = '<div class="label" style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);padding:8px 0;">Chưa có sản phẩm yêu thích nào. Nhấn biểu tượng ♥ trên sản phẩm để lưu lại.</div>';
+    return;
+  }
+  list.innerHTML = favProducts.map(p=>`
+    <div class="playlist-row" style="cursor:pointer;" onclick="openProductDetail('${p.id}')">
+      ${p.image ? `<img class="playlist-row-cover" src="${p.image}" alt="" loading="lazy">` : `<div class="playlist-row-cover"></div>`}
+      <div class="playlist-row-info">
+        <div class="playlist-row-title">${escapeHtml(p.title)}</div>
+        <div class="playlist-row-artist">${escapeHtml(getCollectionName(p.collectionId)||'Chưa phân loại')}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex:0 0 auto;">
+        <button class="mini-btn" onclick="event.stopPropagation(); toggleFavorite('${p.id}')">Bỏ thích</button>
+      </div>
+    </div>
+  `).join('');
+}
+
 // ---------------- PRODUCTS ----------------
 let products = [];
 let collections = [];
@@ -1316,23 +1901,111 @@ let searchQuery = '';
 let editingId = null;
 let pendingImageData = null; // link ảnh hiện tại (dùng để hiển thị / giữ nguyên nếu không đổi ảnh)
 let pendingImageBlob = null; // file ảnh MỚI được chọn, chờ upload lên Cloudinary khi bấm Lưu
+let currentSort = 'newest';
+let favOnlyFilter = false;
+let bulkMode = false;
+let selectedIds = new Set();
+let productsLoaded = false;
+const PAGE_SIZE = 24;
+let visibleCount = PAGE_SIZE;
 
 function getCollectionName(id){
   if(!id) return '';
   const c = collections.find(x=>x.id===id);
   return c ? c.name : '';
 }
+function collectionCount(id){
+  if(!id) return products.filter(p=>!p.collectionId).length;
+  return products.filter(p=>p.collectionId===id).length;
+}
 
-async function renderProducts(){
-  products = await loadProducts();
+// Kiểm tra 1 sản phẩm có đang trong "cửa sổ hiển thị" theo lịch ẩn/hiện hay không.
+// visibleFrom / visibleUntil lưu dạng chuỗi 'YYYY-MM-DD'. Nếu để trống thì không giới hạn phía đó.
+function isProductVisibleNow(p){
+  const now = Date.now();
+  if(p.visibleFrom){
+    const fromTs = new Date(p.visibleFrom + 'T00:00:00').getTime();
+    if(!isNaN(fromTs) && now < fromTs) return false;
+  }
+  if(p.visibleUntil){
+    const untilTs = new Date(p.visibleUntil + 'T23:59:59').getTime();
+    if(!isNaN(untilTs) && now > untilTs) return false;
+  }
+  return true;
+}
+function isProductNew(p){
+  if(!p.createdAt) return false;
+  const hours = (Date.now() - p.createdAt) / (1000*60*60);
+  return hours <= 48;
+}
+
+function renderSkeletons(){
+  const grid = document.getElementById('productGrid');
+  let html = '';
+  for(let i=0;i<6;i++){
+    html += `
+    <div class="skeleton-parcel">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-body">
+        <div class="skeleton-line w60"></div>
+        <div class="skeleton-line w90"></div>
+        <div class="skeleton-line w40"></div>
+      </div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+async function renderProducts(forceFresh){
+  if(!productsLoaded){
+    renderSkeletons();
+  }
+  products = await loadProducts(forceFresh);
+  productsLoaded = true;
+  visibleCount = PAGE_SIZE;
   applyFiltersAndRender();
+  renderFavoritesUI();
+  renderDashboard();
+}
+
+function sortProducts(list){
+  const sorted = [...list];
+  switch(currentSort){
+    case 'oldest':
+      sorted.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+      break;
+    case 'name-asc':
+      sorted.sort((a,b)=>(a.title||'').localeCompare(b.title||'', 'vi'));
+      break;
+    case 'name-desc':
+      sorted.sort((a,b)=>(b.title||'').localeCompare(a.title||'', 'vi'));
+      break;
+    case 'popular':
+      sorted.sort((a,b)=>(b.views||0)-(a.views||0));
+      break;
+    case 'newest':
+    default:
+      sorted.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      break;
+  }
+  // Sản phẩm được ghim (pinned) luôn lên đầu, giữ nguyên thứ tự sắp xếp bên trong 2 nhóm.
+  sorted.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+  return sorted;
 }
 
 function applyFiltersAndRender(){
   const grid = document.getElementById('productGrid');
   let filtered = products;
+  // Khách thường chỉ thấy sản phẩm đang trong lịch hiển thị; Admin thấy tất cả để dễ quản lý.
+  if(!isAdminUnlocked()){
+    filtered = filtered.filter(isProductVisibleNow);
+  }
   if(activeCollectionFilter){
     filtered = filtered.filter(p=>p.collectionId === activeCollectionFilter);
+  }
+  if(favOnlyFilter){
+    const favs = getFavorites();
+    filtered = filtered.filter(p=>favs.includes(p.id));
   }
   const q = searchQuery.trim().toLowerCase();
   if(q){
@@ -1341,33 +2014,80 @@ function applyFiltersAndRender(){
       (p.desc||'').toLowerCase().includes(q)
     );
   }
+  filtered = sortProducts(filtered);
   document.getElementById('countLabel').textContent = filtered.length;
   if(filtered.length===0){
-    const msg = (q || activeCollectionFilter) ? 'Không tìm thấy sản phẩm phù hợp.' : 'Chưa có sản phẩm nào. Nhấn "+ Thêm sản phẩm" để bắt đầu.';
+    let msg = 'Chưa có sản phẩm nào. Nhấn "+ Thêm sản phẩm" để bắt đầu.';
+    if(favOnlyFilter) msg = 'Bạn chưa yêu thích sản phẩm nào.';
+    else if(q || activeCollectionFilter) msg = 'Không tìm thấy sản phẩm phù hợp.';
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${msg}</div>`;
+    document.getElementById('loadMoreWrap').style.display = 'none';
     return;
   }
-  grid.innerHTML = filtered.map((p,idx)=>{
+  const favs = getFavorites();
+  const pageItems = filtered.slice(0, visibleCount);
+  grid.innerHTML = pageItems.map((p,idx)=>{
     const colName = getCollectionName(p.collectionId);
+    const isHot = !!p.pinned;
+    const isNew = isProductNew(p) && !isHot;
+    const isFav = favs.includes(p.id);
+    const isSelected = selectedIds.has(p.id);
+    const isScheduledOff = isAdminUnlocked() && !isProductVisibleNow(p);
     return `
-    <div class="parcel" style="animation-delay:${Math.min(idx*0.06,0.4)}s; cursor:pointer;" onclick="openProductDetail('${p.id}')">
+    <div class="parcel ${isHot?'has-hot':''} ${isNew?'has-new':''} ${isSelected?'selected':''}" style="animation-delay:${Math.min(idx*0.06,0.4)}s;${isScheduledOff?'opacity:.5;':''}" onclick="handleCardClick(event,'${p.id}')">
+      <div class="card-select-box ${isSelected?'checked':''}" onclick="event.stopPropagation(); toggleSelectProduct('${p.id}')">${isSelected?'✓':''}</div>
+      ${isHot ? `<div class="hot-badge">🔥 Hot</div>` : ''}
+      ${isNew ? `<div class="new-badge">✨ Mới</div>` : ''}
+      <button class="fav-btn-card ${isFav?'active':''}" onclick="event.stopPropagation(); toggleFavorite('${p.id}')" title="Yêu thích">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFav?'currentColor':'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+      </button>
       <div class="parcel-tape">${escapeHtml(colName || 'Hàng mới')}</div>
       <div class="parcel-img-wrap">
-        ${p.image ? `<img class="parcel-img" src="${p.image}" alt="${escapeHtml(p.title)}">` : ''}
+        ${p.image ? `<img class="parcel-img" src="${p.image}" alt="${escapeHtml(p.title)}" loading="lazy">` : ''}
       </div>
       <div class="parcel-body">
         <h3>${escapeHtml(p.title)}</h3>
         <div class="parcel-desc">${linkify(p.desc||'')}</div>
+        ${isScheduledOff ? `<span class="schedule-badge">🕓 Ngoài lịch hiển thị</span>` : ''}
         <button class="stamp-btn" onclick="event.stopPropagation(); claimProduct('${p.id}')">Nhận sản phẩm</button>
         <div class="card-admin-row">
           <button class="mini-btn" onclick="event.stopPropagation(); startEdit('${p.id}')">Sửa</button>
           <button class="mini-btn" onclick="event.stopPropagation(); deleteProduct('${p.id}')">Xoá</button>
+          <button class="pin-btn ${isHot?'pinned':''}" onclick="event.stopPropagation(); togglePin('${p.id}')">${isHot?'★ Đã ghim':'☆ Ghim Hot'}</button>
         </div>
       </div>
     </div>
   `;
   }).join('');
+  const loadMoreWrap = document.getElementById('loadMoreWrap');
+  if(filtered.length > visibleCount){
+    loadMoreWrap.style.display = 'block';
+  } else {
+    loadMoreWrap.style.display = 'none';
+  }
 }
+document.getElementById('loadMoreBtn').addEventListener('click', ()=>{
+  visibleCount += PAGE_SIZE;
+  applyFiltersAndRender();
+});
+// Infinite scroll: khi cuộn gần cuối trang, tự động tải thêm luôn.
+window.addEventListener('scroll', ()=>{
+  const homeActive = document.getElementById('view-home').classList.contains('active');
+  if(!homeActive) return;
+  const loadMoreWrap = document.getElementById('loadMoreWrap');
+  if(loadMoreWrap.style.display === 'none') return;
+  if((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 400)){
+    visibleCount += PAGE_SIZE;
+    applyFiltersAndRender();
+  }
+});
+window.handleCardClick = function(e, id){
+  if(bulkMode){
+    toggleSelectProduct(id);
+  } else {
+    openProductDetail(id);
+  }
+};
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
@@ -1387,10 +2107,50 @@ window.claimProduct = function(id){
     return;
   }
   const p = products.find(x=>x.id===id);
-  if(p && p.link) window.open(p.link, '_blank');
+  if(p && p.link){
+    window.open(p.link, '_blank');
+    p.claims = (p.claims||0) + 1;
+    bumpProductStat(id, 'claims');
+    if(currentModalProductId === id) renderModalStats(p);
+    renderDashboard();
+  }
   else showToast('Sản phẩm chưa có link nhận.');
 };
 let currentModalProductId = null;
+function renderModalStats(p){
+  const row = document.getElementById('modalStatsRow');
+  row.innerHTML = `
+    <span class="modal-stat">👁 ${p.views||0} lượt xem</span>
+    <span class="modal-stat">📦 ${p.claims||0} lượt nhận</span>
+  `;
+}
+function updateModalFavButton(id){
+  const btn = document.getElementById('modalFavBtn');
+  const active = isFavorite(id);
+  btn.classList.toggle('active', active);
+  const svg = btn.querySelector('svg');
+  svg.setAttribute('fill', active ? 'currentColor' : 'none');
+}
+function renderRelatedProducts(p){
+  const block = document.getElementById('relatedProductsBlock');
+  const grid = document.getElementById('relatedProductsGrid');
+  if(!p.collectionId){
+    block.style.display = 'none';
+    return;
+  }
+  const related = products.filter(x=>x.id!==p.id && x.collectionId===p.collectionId && (isAdminUnlocked() || isProductVisibleNow(x))).slice(0,8);
+  if(related.length === 0){
+    block.style.display = 'none';
+    return;
+  }
+  grid.innerHTML = related.map(r=>`
+    <div class="related-product-card" onclick="openProductDetail('${r.id}')">
+      ${r.image ? `<img src="${r.image}" alt="${escapeHtml(r.title)}" loading="lazy">` : `<div style="width:100%;height:90px;background:#d8c19a;"></div>`}
+      <div class="rp-title">${escapeHtml(r.title)}</div>
+    </div>
+  `).join('');
+  block.style.display = 'block';
+}
 window.openProductDetail = function(id){
   const p = products.find(x=>x.id===id);
   if(!p) return;
@@ -1407,7 +2167,15 @@ window.openProductDetail = function(id){
   } else {
     tagEl.style.display = 'none';
   }
+  renderModalStats(p);
+  updateModalFavButton(id);
+  renderRelatedProducts(p);
   document.getElementById('productModalOverlay').classList.add('open');
+  // Tăng lượt xem (không chặn UI, âm thầm cập nhật nền)
+  p.views = (p.views||0) + 1;
+  bumpProductStat(id, 'views');
+  renderModalStats(p);
+  renderDashboard();
 };
 function closeProductDetail(){
   document.getElementById('productModalOverlay').classList.remove('open');
@@ -1420,6 +2188,28 @@ document.getElementById('productModalOverlay').addEventListener('click', e=>{
 });
 document.getElementById('modalClaimBtn').addEventListener('click', ()=>{
   if(currentModalProductId) claimProduct(currentModalProductId);
+});
+document.getElementById('modalFavBtn').addEventListener('click', ()=>{
+  if(currentModalProductId) toggleFavorite(currentModalProductId);
+});
+document.getElementById('modalCopyBtn').addEventListener('click', async ()=>{
+  const p = products.find(x=>x.id===currentModalProductId);
+  if(!p || !p.link){ showToast('Sản phẩm chưa có link nhận.'); return; }
+  try{
+    await navigator.clipboard.writeText(p.link);
+    showToast('Đã copy link nhận sản phẩm!');
+  }catch(e){
+    // Phương án dự phòng nếu Clipboard API bị chặn (VD: trang không chạy trên HTTPS)
+    const ta = document.createElement('textarea');
+    ta.value = p.link;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); showToast('Đã copy link nhận sản phẩm!'); }
+    catch(e2){ showToast('Không copy được, vui lòng copy thủ công.'); }
+    document.body.removeChild(ta);
+  }
 });
 document.addEventListener('keydown', e=>{
   if(e.key === 'Escape') closeProductDetail();
@@ -1447,7 +2237,7 @@ function renderSearchSuggestions(query){
     const colName = getCollectionName(p.collectionId);
     return `
     <div class="search-suggestion-item" onclick="selectSearchSuggestion('${p.id}')">
-      <div class="search-suggestion-thumb">${p.image ? `<img src="${p.image}" alt="">` : ''}</div>
+      <div class="search-suggestion-thumb">${p.image ? `<img src="${p.image}" alt="" loading="lazy">` : ''}</div>
       <div class="search-suggestion-info">
         <div class="search-suggestion-title">${escapeHtml(p.title)}</div>
         ${colName ? `<div class="search-suggestion-tag">${escapeHtml(colName)}</div>` : ''}
@@ -1465,6 +2255,7 @@ window.selectSearchSuggestion = function(id){
 
 searchInputEl.addEventListener('input', e=>{
   searchQuery = e.target.value;
+  visibleCount = PAGE_SIZE;
   applyFiltersAndRender();
   renderSearchSuggestions(searchQuery);
   searchClearBtn.style.display = searchQuery ? 'flex' : 'none';
@@ -1487,6 +2278,7 @@ searchClearBtn.addEventListener('click', ()=>{
   searchQuery = '';
   searchInputEl.value = '';
   searchInputEl.focus();
+  visibleCount = PAGE_SIZE;
   applyFiltersAndRender();
   searchSuggestionsEl.classList.remove('open');
   searchClearBtn.style.display = 'none';
@@ -1498,19 +2290,50 @@ document.addEventListener('click', e=>{
   }
 });
 document.addEventListener('keydown', e=>{
-  if(e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT'){
+  const tag = document.activeElement.tagName;
+  if(e.key === '/' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT'){
     e.preventDefault();
     searchInputEl.focus();
   }
+  // Phím tắt Space để phát/tạm dừng nhạc — chỉ khi không đang gõ vào ô nhập liệu nào
+  // và không có modal xác nhận / auth nào đang mở (để không phá thao tác gõ Space bình thường).
+  if(e.key === ' ' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT'){
+    const confirmOpen = document.getElementById('confirmOverlay').classList.contains('open');
+    const authOpen = document.getElementById('userAuthOverlay').style.display === 'flex';
+    if(!confirmOpen && !authOpen && playlist.length > 0){
+      e.preventDefault();
+      userHasInteracted = true;
+      togglePlayPause();
+    }
+  }
+});
+
+// ---------------- SẮP XẾP & LỌC YÊU THÍCH ----------------
+document.getElementById('sortSelect').addEventListener('change', e=>{
+  currentSort = e.target.value;
+  visibleCount = PAGE_SIZE;
+  applyFiltersAndRender();
+});
+document.getElementById('favFilterBtn').addEventListener('click', ()=>{
+  if(!isUserLoggedIn()){
+    showToast('Vui lòng đăng nhập để xem yêu thích.');
+    openUserAuthModal('login');
+    return;
+  }
+  favOnlyFilter = !favOnlyFilter;
+  document.getElementById('favFilterBtn').classList.toggle('active', favOnlyFilter);
+  visibleCount = PAGE_SIZE;
+  applyFiltersAndRender();
 });
 
 // ---------------- BỘ SƯU TẬP: chip lọc trên trang chủ ----------------
 function renderCollectionChipsUI(){
   const box = document.getElementById('collectionChips');
-  let html = `<button class="chip ${activeCollectionFilter===null?'active':''}" onclick="setCollectionFilter(null)">Tất cả</button>`;
+  let html = `<button class="chip ${activeCollectionFilter===null?'active':''}" onclick="setCollectionFilter(null)">Tất cả <span class="chip-count">${products.length}</span></button>`;
   collections.forEach(c=>{
+    const cnt = collectionCount(c.id);
     html += `<button class="chip ${activeCollectionFilter===c.id?'active':''}" onclick="setCollectionFilter('${c.id}')">
-      ${escapeHtml(c.name)}
+      ${escapeHtml(c.name)} <span class="chip-count">${cnt}</span>
       <span class="chip-remove admin-only" onclick="event.stopPropagation(); deleteCollection('${c.id}')" title="Xoá bộ sưu tập">✕</span>
     </button>`;
   });
@@ -1519,12 +2342,14 @@ function renderCollectionChipsUI(){
 }
 window.setCollectionFilter = function(id){
   activeCollectionFilter = id;
+  visibleCount = PAGE_SIZE;
   renderCollectionChipsUI();
   applyFiltersAndRender();
 };
 window.deleteCollection = async function(id){
   if(!checkAdmin()) return;
-  if(!confirm('Xoá bộ sưu tập này? Các sản phẩm trong đó sẽ chuyển về "Chưa phân loại".')) return;
+  const ok = await askConfirm({title:'Xoá bộ sưu tập', message:'Xoá bộ sưu tập này? Các sản phẩm trong đó sẽ chuyển về "Chưa phân loại".', okText:'Xoá', danger:true});
+  if(!ok) return;
   await removeCollectionDoc(id);
   const affected = products.filter(p=>p.collectionId===id);
   for(const p of affected){
@@ -1539,8 +2364,8 @@ window.deleteCollection = async function(id){
 };
 window.promptNewCollection = async function(){
   if(!checkAdmin()) return;
-  const name = prompt('Tên bộ sưu tập mới (VD: Mobile, Áo quần, Tài khoản...):');
-  if(!name || !name.trim()) return;
+  const name = await askPrompt({title:'Bộ sưu tập mới', message:'Tên bộ sưu tập mới (VD: Mobile, Áo quần, Tài khoản...)', placeholder:'Nhập tên bộ sưu tập...', okText:'Tạo'});
+  if(!name) return;
   const trimmed = name.trim();
   const exists = collections.find(c=>c.name.toLowerCase()===trimmed.toLowerCase());
   if(exists){ showToast('Bộ sưu tập này đã tồn tại.'); return; }
@@ -1569,7 +2394,19 @@ document.getElementById('pCollection').addEventListener('change', e=>{
   document.getElementById('pNewCollectionName').style.display = e.target.value === '__new__' ? 'block' : 'none';
 });
 
-window.startEdit = function(id){
+window.togglePin = async function(id){
+  if(!checkAdmin()) return;
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  p.pinned = !p.pinned;
+  const ok = await saveProductDoc(p);
+  if(ok){
+    applyFiltersAndRender();
+    showToast(p.pinned ? 'Đã ghim làm sản phẩm nổi bật 🔥' : 'Đã bỏ ghim.');
+  }
+};
+
+window.startEdit = async function(id){
   if(!checkAdmin()) return;
   const p = products.find(x=>x.id===id);
   if(!p) return;
@@ -1580,18 +2417,45 @@ window.startEdit = function(id){
   document.getElementById('pTitle').value = p.title;
   document.getElementById('pDesc').value = p.desc||'';
   document.getElementById('pLink').value = p.link||'';
+  document.getElementById('pPinned').checked = !!p.pinned;
+  document.getElementById('pVisibleFrom').value = p.visibleFrom || '';
+  document.getElementById('pVisibleUntil').value = p.visibleUntil || '';
   document.getElementById('fileDrop').innerHTML = p.image ? `<img src="${p.image}">` : 'Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)';
   populateCollectionSelect(p.collectionId||'');
+  // Chỉ hiện nút Hoàn tác nếu có bản lưu lịch sử trước đó cho sản phẩm này.
+  const historySnap = await loadProductHistorySnapshot(id);
+  document.getElementById('undoEditBtn').style.display = historySnap ? 'inline-block' : 'none';
   switchView('form');
 };
+document.getElementById('undoEditBtn').addEventListener('click', async ()=>{
+  if(!checkAdmin() || !editingId) return;
+  const snap = await loadProductHistorySnapshot(editingId);
+  if(!snap){ showToast('Không có bản lưu trước đó để hoàn tác.'); return; }
+  const ok = await askConfirm({title:'Hoàn tác chỉnh sửa', message:'Khôi phục sản phẩm về phiên bản trước lần sửa gần nhất?', okText:'Hoàn tác'});
+  if(!ok) return;
+  delete snap.savedAt;
+  const saved = await saveProductDoc(snap);
+  if(saved){
+    await removeProductHistorySnapshot(editingId);
+    products = products.map(x=>x.id===editingId?snap:x);
+    applyFiltersAndRender();
+    renderCollectionChipsUI();
+    switchView('home');
+    showToast('Đã hoàn tác về phiên bản trước.');
+  }
+});
 window.deleteProduct = async function(id){
   if(!checkAdmin()) return;
-  if(!confirm('Xoá sản phẩm này?')) return;
+  const ok = await askConfirm({title:'Xoá sản phẩm', message:'Xoá sản phẩm này? Hành động này không thể hoàn tác.', okText:'Xoá', danger:true});
+  if(!ok) return;
   await removeProductDoc(id);
+  await removeProductHistorySnapshot(id);
   products = products.filter(x=>x.id!==id);
+  selectedIds.delete(id);
   applyFiltersAndRender();
+  renderCollectionChipsUI();
+  renderDashboard();
   showToast('Đã xoá sản phẩm.');
-  setTimeout(()=>location.reload(), 400);
 };
 function isAdminUnlocked(){
   return localStorage.getItem('siteAdminUnlocked') === '1';
@@ -1604,10 +2468,16 @@ document.getElementById('loginBtn').addEventListener('click', ()=>{
     localStorage.removeItem('siteAdminUnlocked');
     clearCurrentUser();
     renderAuthUI();
+    exitBulkMode();
     showToast('Đã thoát quyền quản trị.');
+    applyFiltersAndRender();
   } else if(isUserLoggedIn()){
     clearCurrentUser();
     renderAuthUI();
+    favOnlyFilter = false;
+    document.getElementById('favFilterBtn').classList.remove('active');
+    applyFiltersAndRender();
+    renderFavoritesUI();
     showToast('Đã đăng xuất tài khoản.');
   } else {
     openUserAuthModal('login');
@@ -1626,7 +2496,11 @@ document.getElementById('openAddBtn').addEventListener('click', ()=>{
   document.getElementById('pTitle').value = '';
   document.getElementById('pDesc').value = '';
   document.getElementById('pLink').value = '';
+  document.getElementById('pPinned').checked = false;
+  document.getElementById('pVisibleFrom').value = '';
+  document.getElementById('pVisibleUntil').value = '';
   document.getElementById('fileDrop').innerHTML = 'Nhấn để chọn ảnh (sẽ tự nén cho nhẹ)';
+  document.getElementById('undoEditBtn').style.display = 'none';
   populateCollectionSelect(activeCollectionFilter || '');
   switchView('form');
 });
@@ -1647,12 +2521,24 @@ document.getElementById('imgInput').addEventListener('change', async e=>{
   }
 });
 
+function isValidDateStr(s){
+  if(!s) return true;
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s+'T00:00:00').getTime());
+}
+
 document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
   const title = document.getElementById('pTitle').value.trim();
   const desc = document.getElementById('pDesc').value.trim();
   const link = document.getElementById('pLink').value.trim();
+  const pinned = document.getElementById('pPinned').checked;
+  const visibleFrom = document.getElementById('pVisibleFrom').value.trim();
+  const visibleUntil = document.getElementById('pVisibleUntil').value.trim();
   if(!title){ showToast('Vui lòng nhập tên sản phẩm.'); return; }
   if(!link){ showToast('Vui lòng nhập link nhận hàng.'); return; }
+  if(!isValidDateStr(visibleFrom) || !isValidDateStr(visibleUntil)){
+    showToast('Ngày lịch ẩn/hiện không hợp lệ, dùng định dạng YYYY-MM-DD.');
+    return;
+  }
 
   const saveBtn = document.getElementById('saveProductBtn');
   saveBtn.disabled = true;
@@ -1675,7 +2561,6 @@ document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
       if(!okCol){ saveBtn.disabled = false; return; }
       collections.push(newCol);
       collectionId = newCol.id;
-      renderCollectionChipsUI();
     }
   }
 
@@ -1695,21 +2580,180 @@ document.getElementById('saveProductBtn').addEventListener('click', async ()=>{
   let productToSave;
   if(editingId){
     const p = products.find(x=>x.id===editingId);
-    p.title = title; p.desc = desc; p.link = link; p.image = imageUrl; p.collectionId = collectionId;
+    // Lưu snapshot của bản TRƯỚC khi ghi đè, để admin có thể "hoàn tác" nếu lỡ tay.
+    await saveProductHistorySnapshot(p);
+    p.title = title; p.desc = desc; p.link = link; p.image = imageUrl; p.collectionId = collectionId; p.pinned = pinned;
+    p.visibleFrom = visibleFrom; p.visibleUntil = visibleUntil;
     productToSave = p;
   } else {
-    productToSave = {id: 'p'+Date.now(), title, desc, link, image: imageUrl, collectionId, createdAt: Date.now()};
+    productToSave = {id: 'p'+Date.now(), title, desc, link, image: imageUrl, collectionId, pinned, visibleFrom, visibleUntil, views:0, claims:0, createdAt: Date.now()};
     products.push(productToSave);
   }
 
   const ok = await saveProductDoc(productToSave);
   saveBtn.disabled = false;
-  if(!ok) return; // lỗi đã hiện toast bên trong saveProductDoc, không reload để mất dấu lỗi
+  if(!ok) return; // lỗi đã hiện toast bên trong saveProductDoc
 
   applyFiltersAndRender();
+  renderCollectionChipsUI();
+  renderDashboard();
   switchView('home');
   showToast('Đã lưu sản phẩm!');
-  setTimeout(()=>location.reload(), 400);
+});
+
+// ---------------- BULK ACTIONS (thao tác hàng loạt cho Admin) ----------------
+function enterBulkMode(){
+  bulkMode = true;
+  selectedIds.clear();
+  document.body.classList.add('bulk-mode');
+  document.getElementById('bulkToggleBtn').classList.add('active');
+  document.getElementById('bulkToggleBtn').textContent = '✕ Thoát chọn';
+  updateBulkBar();
+  applyFiltersAndRender();
+}
+function exitBulkMode(){
+  bulkMode = false;
+  selectedIds.clear();
+  document.body.classList.remove('bulk-mode');
+  document.getElementById('bulkToggleBtn').classList.remove('active');
+  document.getElementById('bulkToggleBtn').textContent = '☑ Chọn nhiều';
+  updateBulkBar();
+  applyFiltersAndRender();
+}
+document.getElementById('bulkToggleBtn').addEventListener('click', ()=>{
+  if(!checkAdmin()) return;
+  if(bulkMode) exitBulkMode(); else enterBulkMode();
+});
+window.toggleSelectProduct = function(id){
+  if(selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateBulkBar();
+  applyFiltersAndRender();
+};
+function updateBulkBar(){
+  const bar = document.getElementById('bulkBar');
+  bar.classList.toggle('show', bulkMode && selectedIds.size > 0);
+  document.getElementById('bulkCount').textContent = selectedIds.size;
+  const sel = document.getElementById('bulkCollectionSelect');
+  let html = `<option value="">Chưa phân loại</option>`;
+  collections.forEach(c=>{ html += `<option value="${c.id}">${escapeHtml(c.name)}</option>`; });
+  sel.innerHTML = html;
+}
+document.getElementById('bulkCancelBtn').addEventListener('click', exitBulkMode);
+document.getElementById('bulkApplyBtn').addEventListener('click', async ()=>{
+  if(!checkAdmin() || selectedIds.size === 0) return;
+  const collectionId = document.getElementById('bulkCollectionSelect').value;
+  const btn = document.getElementById('bulkApplyBtn');
+  btn.disabled = true;
+  const ids = Array.from(selectedIds);
+  for(const id of ids){
+    const p = products.find(x=>x.id===id);
+    if(p){
+      p.collectionId = collectionId;
+      await saveProductDoc(p);
+    }
+  }
+  btn.disabled = false;
+  showToast(`Đã gán bộ sưu tập cho ${ids.length} sản phẩm.`);
+  renderCollectionChipsUI();
+  exitBulkMode();
+});
+document.getElementById('bulkDeleteBtn').addEventListener('click', async ()=>{
+  if(!checkAdmin() || selectedIds.size === 0) return;
+  const ok = await askConfirm({title:'Xoá nhiều sản phẩm', message:`Xoá ${selectedIds.size} sản phẩm đã chọn? Hành động này không thể hoàn tác.`, okText:'Xoá tất cả', danger:true});
+  if(!ok) return;
+  const ids = Array.from(selectedIds);
+  for(const id of ids){
+    await removeProductDoc(id);
+  }
+  products = products.filter(p=>!selectedIds.has(p.id));
+  showToast(`Đã xoá ${ids.length} sản phẩm.`);
+  renderCollectionChipsUI();
+  renderDashboard();
+  exitBulkMode();
+});
+
+// ---------------- DASHBOARD (Admin: thống kê + Export/Import) ----------------
+function renderDashboard(){
+  if(!isAdminUnlocked()) return;
+  const totalProducts = products.length;
+  const totalViews = products.reduce((sum,p)=>sum+(p.views||0),0);
+  const totalClaims = products.reduce((sum,p)=>sum+(p.claims||0),0);
+  document.getElementById('dashTotalProducts').textContent = totalProducts;
+  document.getElementById('dashTotalViews').textContent = totalViews;
+  document.getElementById('dashTotalClaims').textContent = totalClaims;
+
+  const top5 = [...products].sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5);
+  const listEl = document.getElementById('dashboardTopList');
+  if(top5.length === 0){
+    listEl.innerHTML = '<div class="label" style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);padding:6px 0;">Chưa có dữ liệu.</div>';
+    return;
+  }
+  listEl.innerHTML = top5.map((p,idx)=>`
+    <div class="dashboard-top-row">
+      <span class="dashboard-top-rank">#${idx+1}</span>
+      ${p.image ? `<img class="dashboard-top-cover" src="${p.image}" alt="" loading="lazy">` : `<div class="dashboard-top-cover"></div>`}
+      <span class="dashboard-top-name">${escapeHtml(p.title)}</span>
+      <span class="dashboard-top-views">👁 ${p.views||0}</span>
+    </div>
+  `).join('');
+}
+
+document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
+  if(!checkAdmin()) return;
+  const exportData = {
+    exportedAt: new Date().toISOString(),
+    products, collections,
+  };
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kho-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Đã tải file backup JSON.');
+});
+document.getElementById('importJsonBtn').addEventListener('click', ()=>{
+  if(!checkAdmin()) return;
+  document.getElementById('importJsonInput').click();
+});
+document.getElementById('importJsonInput').addEventListener('change', async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const importedProducts = Array.isArray(data.products) ? data.products : [];
+    const importedCollections = Array.isArray(data.collections) ? data.collections : [];
+    if(importedProducts.length === 0 && importedCollections.length === 0){
+      showToast('File JSON không có dữ liệu hợp lệ để nhập.');
+      return;
+    }
+    const ok = await askConfirm({
+      title:'Nhập dữ liệu từ JSON',
+      message:`Sẽ nhập ${importedProducts.length} sản phẩm và ${importedCollections.length} bộ sưu tập. Các sản phẩm/bộ sưu tập trùng ID sẽ bị ghi đè. Tiếp tục?`,
+      okText:'Nhập dữ liệu'
+    });
+    if(!ok) return;
+    for(const c of importedCollections){
+      await saveCollectionDoc(c);
+    }
+    for(const p of importedProducts){
+      await saveProductDoc(p);
+    }
+    collections = await loadCollections();
+    await renderProducts(true);
+    renderCollectionChipsUI();
+    showToast('Đã nhập dữ liệu thành công!');
+  }catch(err){
+    console.error(err);
+    showToast('File JSON không hợp lệ, kiểm tra lại nhé.');
+  } finally {
+    e.target.value = '';
+  }
 });
 
 // ---------------- PROFILE ----------------
@@ -1803,7 +2847,6 @@ document.getElementById('saveProfileBtn').addEventListener('click', async ()=>{
   document.getElementById('profileEditForm').style.display='none';
   renderProfile();
   showToast('Đã lưu hồ sơ!');
-  setTimeout(()=>location.reload(), 400);
 });
 
 // ---------------- PLAYLIST NHẠC ----------------
@@ -1822,7 +2865,7 @@ async function renderPlaylistAdmin(){
   } else {
     list.innerHTML = playlist.map((s,idx)=>`
       <div class="playlist-row">
-        ${s.cover ? `<img class="playlist-row-cover" src="${s.cover}" alt="">` : `<div class="playlist-row-cover"></div>`}
+        ${s.cover ? `<img class="playlist-row-cover" src="${s.cover}" alt="" loading="lazy">` : `<div class="playlist-row-cover"></div>`}
         <div class="playlist-row-info">
           <div class="playlist-row-title">${escapeHtml(s.title)}</div>
           <div class="playlist-row-artist">${escapeHtml(s.artist||'')}</div>
@@ -1876,7 +2919,8 @@ window.startEditSong = function(id){
 };
 window.deleteSong = async function(id){
   if(!checkAdmin()) return;
-  if(!confirm('Xoá bài hát này?')) return;
+  const ok = await askConfirm({title:'Xoá bài hát', message:'Xoá bài hát này?', okText:'Xoá', danger:true});
+  if(!ok) return;
   await removePlaylistDoc(id);
   playlist = playlist.filter(x=>x.id!==id);
   await renderPlaylistAdmin();
@@ -1976,11 +3020,44 @@ const playerCurrentTimeEl = document.getElementById('playerCurrentTime');
 const playerDurationEl = document.getElementById('playerDuration');
 const playerPlayIcon = document.getElementById('playerPlayIcon');
 const playerDeleteBtn = document.getElementById('playerDeleteBtn');
+const playerShuffleBtn = document.getElementById('playerShuffleBtn');
+const playerRepeatBtn = document.getElementById('playerRepeatBtn');
+const playerMuteBtn = document.getElementById('playerMuteBtn');
+const playerVolIcon = document.getElementById('playerVolIcon');
+const playerVolume = document.getElementById('playerVolume');
+const playerDiscWrap = document.getElementById('playerDiscWrap');
+const queueOverlay = document.getElementById('queueOverlay');
+const queueList = document.getElementById('queueList');
 
 let currentTrackIndex = 0;
 let musicPlaying = false;
 let userHasInteracted = false;
 let seekDragging = false;
+let shuffleOn = false;
+let repeatOn = false;
+let lastVolume = 0.5;
+let isMuted = false;
+let shuffleHistory = [];
+const RESUME_POS_KEY = 'musicResumePositions'; // lưu vị trí nghe dở theo từng bài hát (id -> giây)
+
+function getResumePositions(){
+  try{
+    const raw = localStorage.getItem(RESUME_POS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){ return {}; }
+}
+function saveResumePosition(trackId, seconds){
+  if(!trackId) return;
+  try{
+    const positions = getResumePositions();
+    positions[trackId] = seconds;
+    localStorage.setItem(RESUME_POS_KEY, JSON.stringify(positions));
+  }catch(e){ /* localStorage đầy hoặc bị chặn, bỏ qua */ }
+}
+function getResumePosition(trackId){
+  const positions = getResumePositions();
+  return positions[trackId] || 0;
+}
 
 function formatTime(sec){
   if(!isFinite(sec) || sec < 0) sec = 0;
@@ -2002,6 +3079,11 @@ function setupPlayerForPlaylist(){
 
 function loadTrack(index, autoplay){
   if(playlist.length === 0) return;
+  // Lưu lại vị trí nghe dở của bài hiện tại trước khi chuyển bài khác.
+  const prevTrack = playlist[currentTrackIndex];
+  if(prevTrack && bgAudio.currentTime > 0){
+    saveResumePosition(prevTrack.id, bgAudio.currentTime);
+  }
   currentTrackIndex = ((index % playlist.length) + playlist.length) % playlist.length;
   const track = playlist[currentTrackIndex];
   bgAudio.src = track.audioUrl;
@@ -2018,6 +3100,18 @@ function loadTrack(index, autoplay){
   playerSeek.value = 0;
   playerCurrentTimeEl.textContent = '00:00';
   playerDurationEl.textContent = '00:00';
+  renderQueueList();
+  // Khôi phục vị trí nghe dở lần trước (nếu có) ngay khi metadata sẵn sàng.
+  const resumeAt = getResumePosition(track.id);
+  if(resumeAt > 0){
+    const onLoaded = ()=>{
+      if(resumeAt < bgAudio.duration - 3){
+        bgAudio.currentTime = resumeAt;
+      }
+      bgAudio.removeEventListener('loadedmetadata', onLoaded);
+    };
+    bgAudio.addEventListener('loadedmetadata', onLoaded);
+  }
   if(autoplay){
     playTrack();
   } else {
@@ -2026,7 +3120,7 @@ function loadTrack(index, autoplay){
 }
 
 async function playTrack(){
-  bgAudio.volume = 0.5;
+  bgAudio.volume = isMuted ? 0 : lastVolume;
   try{
     await bgAudio.play();
     musicPlaying = true;
@@ -2039,21 +3133,68 @@ function pauseTrack(){
   musicPlaying = false;
   playerDisc.classList.add('paused');
   playerPlayIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+  const track = playlist[currentTrackIndex];
+  if(track) saveResumePosition(track.id, bgAudio.currentTime);
 }
 function togglePlayPause(){
   userHasInteracted = true;
   if(musicPlaying) pauseTrack(); else playTrack();
 }
+function pickRandomIndex(){
+  if(playlist.length <= 1) return currentTrackIndex;
+  let next;
+  do{ next = Math.floor(Math.random()*playlist.length); }
+  while(next === currentTrackIndex);
+  return next;
+}
 function nextTrack(){
-  loadTrack(currentTrackIndex+1, musicPlaying || userHasInteracted);
+  if(repeatOn){
+    loadTrack(currentTrackIndex, musicPlaying || userHasInteracted);
+    return;
+  }
+  const idx = shuffleOn ? pickRandomIndex() : currentTrackIndex+1;
+  loadTrack(idx, musicPlaying || userHasInteracted);
 }
 function prevTrack(){
-  loadTrack(currentTrackIndex-1, musicPlaying || userHasInteracted);
+  const idx = shuffleOn ? pickRandomIndex() : currentTrackIndex-1;
+  loadTrack(idx, musicPlaying || userHasInteracted);
 }
 
 document.getElementById('playerPlayBtn').addEventListener('click', togglePlayPause);
 document.getElementById('playerNextBtn').addEventListener('click', ()=>{ userHasInteracted = true; nextTrack(); });
 document.getElementById('playerPrevBtn').addEventListener('click', ()=>{ userHasInteracted = true; prevTrack(); });
+
+playerShuffleBtn.addEventListener('click', ()=>{
+  shuffleOn = !shuffleOn;
+  playerShuffleBtn.classList.toggle('toggled', shuffleOn);
+  showToast(shuffleOn ? 'Đã bật phát ngẫu nhiên' : 'Đã tắt phát ngẫu nhiên');
+});
+playerRepeatBtn.addEventListener('click', ()=>{
+  repeatOn = !repeatOn;
+  playerRepeatBtn.classList.toggle('toggled', repeatOn);
+  showToast(repeatOn ? 'Đã bật lặp lại bài này' : 'Đã tắt lặp lại');
+});
+playerMuteBtn.addEventListener('click', ()=>{
+  isMuted = !isMuted;
+  bgAudio.volume = isMuted ? 0 : lastVolume;
+  updateVolumeIcon();
+});
+function updateVolumeIcon(){
+  if(isMuted || lastVolume === 0){
+    playerVolIcon.innerHTML = '<path d="M16.5 12A4.5 4.5 0 0 0 14 8v2.18l2.45 2.45c.03-.2.05-.42.05-.63zM19 12c0 .94-.2 1.82-.54 2.64l1.51 1.51A8.796 8.796 0 0 0 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3 3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06a8.99 8.99 0 0 0 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4 9.91 6.09 12 8.18V4z"/>';
+  } else if(lastVolume < 0.5){
+    playerVolIcon.innerHTML = '<path d="M18.5 12A4.5 4.5 0 0 0 16 8v8a4.5 4.5 0 0 0 2.5-4z"/><path d="M5 9v6h4l5 5V4L9 9H5z"/>';
+  } else {
+    playerVolIcon.innerHTML = '<path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 0 0-2.5-4.03v8.05A4.5 4.5 0 0 0 16.5 12z"/>';
+  }
+}
+playerVolume.addEventListener('input', ()=>{
+  lastVolume = playerVolume.value / 100;
+  isMuted = lastVolume === 0;
+  bgAudio.volume = lastVolume;
+  updateVolumeIcon();
+});
+playerVolume.value = Math.round(lastVolume*100);
 
 bgAudio.addEventListener('timeupdate', ()=>{
   if(seekDragging) return;
@@ -2066,7 +3207,22 @@ bgAudio.addEventListener('timeupdate', ()=>{
 bgAudio.addEventListener('loadedmetadata', ()=>{
   playerDurationEl.textContent = formatTime(bgAudio.duration);
 });
-bgAudio.addEventListener('ended', ()=>{ nextTrack(); });
+bgAudio.addEventListener('ended', ()=>{
+  const track = playlist[currentTrackIndex];
+  if(track) saveResumePosition(track.id, 0); // bài đã nghe xong, xoá vị trí dở để lần sau phát lại từ đầu
+  nextTrack();
+});
+// Định kỳ lưu vị trí nghe dở để không mất tiến trình nếu người dùng đóng tab đột ngột.
+setInterval(()=>{
+  if(musicPlaying){
+    const track = playlist[currentTrackIndex];
+    if(track) saveResumePosition(track.id, bgAudio.currentTime);
+  }
+}, 5000);
+window.addEventListener('beforeunload', ()=>{
+  const track = playlist[currentTrackIndex];
+  if(track) saveResumePosition(track.id, bgAudio.currentTime);
+});
 playerSeek.addEventListener('input', ()=>{ seekDragging = true; });
 playerSeek.addEventListener('change', ()=>{
   if(bgAudio.duration){
@@ -2105,9 +3261,44 @@ playerDeleteBtn.addEventListener('click', async (e)=>{
   await window.deleteSong(track.id);
 });
 
+// ---------------- QUEUE (xem trước danh sách phát) ----------------
+function renderQueueList(){
+  if(playlist.length === 0){
+    queueList.innerHTML = '<div class="label" style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);padding:8px 0;">Chưa có bài hát nào.</div>';
+    return;
+  }
+  queueList.innerHTML = playlist.map((s,idx)=>`
+    <div class="queue-item ${idx===currentTrackIndex?'active':''}" onclick="playFromQueue(${idx})">
+      ${s.cover ? `<img class="queue-item-cover" src="${s.cover}" alt="" loading="lazy">` : `<div class="queue-item-cover"></div>`}
+      <div class="queue-item-info">
+        <div class="queue-item-title">${escapeHtml(s.title)}</div>
+        <div class="queue-item-artist">${escapeHtml(s.artist||'')}</div>
+      </div>
+      ${idx===currentTrackIndex ? '<span style="font-size:12px;">▶</span>' : ''}
+    </div>
+  `).join('');
+}
+window.playFromQueue = function(idx){
+  userHasInteracted = true;
+  loadTrack(idx, true);
+  queueOverlay.classList.remove('open');
+};
+playerDiscWrap.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  renderQueueList();
+  queueOverlay.classList.add('open');
+});
+queueOverlay.addEventListener('click', e=>{
+  if(e.target.id === 'queueOverlay') queueOverlay.classList.remove('open');
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') queueOverlay.classList.remove('open');
+});
+
 // ---------------- INIT ----------------
 (async function init(){
   renderAuthUI();
+  updateVolumeIcon();
   collections = await loadCollections();
   renderCollectionChipsUI();
   await renderProducts();
