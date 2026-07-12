@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
 // ---------------- CONFIG ----------------
 const ADMIN_USERNAME = "adminbuivinh0804";
@@ -17,9 +18,11 @@ const firebaseConfig = {
   measurementId: "G-7N4C0D55CJ"
 };
 let db = null;
+let cloudFns = null;
 try{
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  cloudFns = getFunctions(app); // dùng để gọi Cloud Function (proxy rút gọn link, tránh CORS)
 }catch(e){
   console.error('Chưa cấu hình Firebase đúng cách:', e);
 }
@@ -539,6 +542,8 @@ async function submitUserLogin(){
     applyFiltersAndRender();
     renderCollectionChipsUI();
     renderDashboard();
+    renderTasks();
+    renderProvidersAdminUI();
     return;
   }
 
@@ -673,8 +678,8 @@ let tasksLoaded = false;
 let editingTaskId = null;
 let startedTasks = new Set(); // id nhiệm vụ đã bấm "vượt link" trong phiên hiện tại, chờ xác nhận
 
-// ---------------- SETTINGS (Link4m API key + giới hạn số nhiệm vụ hoạt động) ----------------
-let appSettings = { link4mApiKey: '', maxActiveTasks: 0 }; // maxActiveTasks = 0 nghĩa là không giới hạn
+// ---------------- SETTINGS (giới hạn số nhiệm vụ hoạt động) ----------------
+let appSettings = { maxActiveTasks: 0 }; // maxActiveTasks = 0 nghĩa là không giới hạn
 let currentFormTaskId = null; // id (đã "giữ chỗ") của nhiệm vụ đang thêm/sửa trong form, dùng để build link quay về ổn định trước khi lưu
 async function loadSettings(){
   if(!db) return;
@@ -682,7 +687,6 @@ async function loadSettings(){
     const snap = await getDoc(doc(db,'settings','general'));
     if(snap.exists()){
       const d = snap.data();
-      appSettings.link4mApiKey = d.link4mApiKey || '';
       appSettings.maxActiveTasks = Number(d.maxActiveTasks) || 0;
     }
   }catch(e){ console.error('Không tải được cài đặt:', e); }
@@ -691,24 +695,19 @@ async function saveSettingsDoc(){
   if(!db){ showToast('Chưa cấu hình Firebase.'); return false; }
   try{
     await setDoc(doc(db,'settings','general'), {
-      link4mApiKey: appSettings.link4mApiKey || '',
       maxActiveTasks: Number(appSettings.maxActiveTasks) || 0
     });
     return true;
   }catch(e){ console.error(e); showToast('Lưu cài đặt thất bại.'); return false; }
 }
 function fillSettingsFormUI(){
-  const keyEl = document.getElementById('stLink4mApiKey');
   const maxEl = document.getElementById('stMaxActiveTasks');
-  if(keyEl) keyEl.value = appSettings.link4mApiKey || '';
   if(maxEl) maxEl.value = appSettings.maxActiveTasks ? String(appSettings.maxActiveTasks) : '';
 }
 document.getElementById('saveTaskSettingsBtn').addEventListener('click', async ()=>{
   if(!checkAdmin()) return;
-  const key = document.getElementById('stLink4mApiKey').value.trim();
   const maxRaw = document.getElementById('stMaxActiveTasks').value.trim();
   const max = maxRaw ? Math.max(0, parseInt(maxRaw, 10) || 0) : 0;
-  appSettings.link4mApiKey = key;
   appSettings.maxActiveTasks = max;
   const ok = await saveSettingsDoc();
   if(ok) showToast('Đã lưu cài đặt!');
@@ -717,19 +716,165 @@ document.getElementById('saveTaskSettingsBtn').addEventListener('click', async (
 function countActiveTasks(excludeId){
   return tasks.filter(t => t.active !== false && t.id !== excludeId).length;
 }
-// Gọi API Link4m để tự động rút gọn "link quay về" của nhiệm vụ, điền thẳng vào ô Link vượt
-async function shortenWithLink4m(longUrl){
-  const apiKey = (appSettings.link4mApiKey || '').trim();
-  if(!apiKey) throw new Error('Chưa cấu hình API Key Link4m. Vào mục "Cài đặt Link4m & Giới hạn" ở tab Nhiệm vụ để nhập API Key.');
-  const apiUrl = `https://link4m.co/api-shorten/v2?api=${encodeURIComponent(apiKey)}&url=${encodeURIComponent(longUrl)}&format=text`;
-  const res = await fetch(apiUrl);
-  if(!res.ok) throw new Error('Link4m API lỗi HTTP ' + res.status);
-  const text = (await res.text()).trim();
-  if(!text || !/^https?:\/\//i.test(text)){
-    throw new Error(text || 'Link4m không trả về link hợp lệ. Kiểm tra lại API Key.');
-  }
-  return text;
+
+// ---------------- NHÀ CUNG CẤP RÚT GỌN LINK (Link4m, LinkTot, Layma, Uptolink...) ----------------
+// Toàn bộ URL API + API Key được lưu ở server (Firestore settings/providersPrivate, client KHÔNG đọc được)
+// và chỉ được gọi thông qua Cloud Function (functions/index.js) để tránh lỗi CORS khi gọi thẳng từ trình duyệt.
+// Client chỉ thấy danh sách "công khai" (tên + bật/tắt) qua settings/providersPublic để hiển thị dropdown.
+let providersPublic = []; // [{id, name, enabled}]
+async function loadProvidersPublic(){
+  if(!db) return;
+  try{
+    const snap = await getDoc(doc(db,'settings','providersPublic'));
+    const list = snap.exists() ? (snap.data().list || {}) : {};
+    providersPublic = Object.keys(list).map(id => ({id, name: list[id].name, enabled: list[id].enabled !== false}));
+  }catch(e){ console.error('Không tải được danh sách nhà cung cấp:', e); providersPublic = []; }
 }
+function callCloudFn(name, payload){
+  if(!cloudFns) return Promise.reject(new Error('Chưa cấu hình Cloud Functions.'));
+  return httpsCallable(cloudFns, name)(payload).then(res => res.data);
+}
+// Gọi Cloud Function để rút gọn "longUrl" bằng nhà cung cấp đã chọn (chạy phía server, không bị CORS)
+async function shortenViaProvider(providerId, longUrl){
+  if(!providerId) throw new Error('Nhiệm vụ chưa chọn nhà cung cấp rút gọn link.');
+  try{
+    const data = await callCloudFn('shortenLink', {providerId, longUrl});
+    if(!data || !data.shortUrl) throw new Error('Không nhận được link rút gọn.');
+    return data.shortUrl;
+  }catch(e){
+    console.error(e);
+    throw new Error(e.message || 'Tạo link thất bại, thử lại nhé. (Kiểm tra Cloud Function đã deploy chưa?)');
+  }
+}
+function providerOptionsHtml(selectedId){
+  if(providersPublic.length === 0){
+    return `<option value="">-- Chưa có nhà cung cấp nào, thêm ở mục "Nhà cung cấp rút gọn link" --</option>`;
+  }
+  return providersPublic.filter(p=>p.enabled).map(p =>
+    `<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escapeHtml(p.name)}</option>`
+  ).join('');
+}
+function fillTaskProviderSelect(selectedId){
+  const sel = document.getElementById('tProviderId');
+  if(!sel) return;
+  sel.innerHTML = `<option value="">-- Không dùng (chỉ dùng Link cố định) --</option>` + providerOptionsHtml(selectedId);
+}
+// ---- Quản trị (chỉ admin, cần adminSecret trùng với ADMIN_PASSWORD đã cấu hình trên Cloud Function) ----
+async function manageProvidersCall(action, extra){
+  return callCloudFn('manageProviders', {adminSecret: ADMIN_PASSWORD, action, ...extra});
+}
+async function renderProvidersAdminUI(){
+  const list = document.getElementById('providerAdminList');
+  if(!list || !isAdminUnlocked()) return;
+  list.innerHTML = `<div class="empty-state">Đang tải danh sách nhà cung cấp...</div>`;
+  try{
+    const {list: providers} = await manageProvidersCall('list', {});
+    const ids = Object.keys(providers||{});
+    if(ids.length === 0){
+      list.innerHTML = `<div class="empty-state">Chưa có nhà cung cấp nào. Thêm mới ở form bên dưới.</div>`;
+      return;
+    }
+    list.innerHTML = ids.map(id => {
+      const p = providers[id];
+      return `
+      <div class="task-card" style="padding:14px 16px;">
+        <div class="task-card-top">
+          <h3 style="font-size:15px;">${escapeHtml(p.name)}</h3>
+          ${p.enabled===false ? `<div class="task-inactive-badge">Đang tắt</div>` : ''}
+        </div>
+        <div class="task-desc" style="word-break:break-all;">${escapeHtml(p.apiUrlTemplate)}</div>
+        <div class="task-actions">
+          <button class="mini-btn" onclick="editProviderAdmin('${id}')">Sửa</button>
+          <button class="mini-btn" onclick="testProviderAdmin('${id}')">Test</button>
+          <button class="mini-btn" onclick="deleteProviderAdmin('${id}')">Xoá</button>
+          <button class="pin-btn ${p.enabled!==false?'pinned':''}" onclick="toggleProviderAdmin('${id}', ${p.enabled===false})">${p.enabled!==false?'★ Đang bật':'☆ Đang tắt'}</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    console.error(e);
+    list.innerHTML = `<div class="empty-state">Không tải được danh sách (Cloud Function đã deploy & cấu hình admin secret chưa?): ${escapeHtml(e.message||'')}</div>`;
+  }
+}
+let editingProviderId = null;
+window.editProviderAdmin = async function(id){
+  if(!checkAdmin()) return;
+  try{
+    const {list} = await manageProvidersCall('list', {});
+    const p = list[id];
+    if(!p) return;
+    editingProviderId = id;
+    document.getElementById('pvName').value = p.name || '';
+    document.getElementById('pvUrlTemplate').value = p.apiUrlTemplate || '';
+    document.getElementById('pvApiKey').value = p.apiKey || '';
+    document.getElementById('pvMethod').value = p.method || 'GET';
+    document.getElementById('pvResponseType').value = p.responseType || 'text';
+    document.getElementById('pvJsonPath').value = p.jsonPath || '';
+    document.getElementById('pvEnabled').checked = p.enabled !== false;
+    document.getElementById('providerFormTitle').textContent = 'Sửa nhà cung cấp: ' + p.name;
+  }catch(e){ showToast('Lỗi tải nhà cung cấp: ' + (e.message||'')); }
+};
+window.deleteProviderAdmin = async function(id){
+  if(!checkAdmin()) return;
+  const ok = await askConfirm({title:'Xoá nhà cung cấp', message:'Xoá nhà cung cấp này? Các nhiệm vụ đang dùng sẽ không tạo được link nữa.', okText:'Xoá', danger:true});
+  if(!ok) return;
+  try{
+    await manageProvidersCall('delete', {providerId: id});
+    showToast('Đã xoá.');
+    await renderProvidersAdminUI();
+    await loadProvidersPublic();
+  }catch(e){ showToast('Xoá thất bại: ' + (e.message||'')); }
+};
+window.toggleProviderAdmin = async function(id, turnOn){
+  if(!checkAdmin()) return;
+  try{
+    const {list} = await manageProvidersCall('list', {});
+    const p = list[id];
+    if(!p) return;
+    await manageProvidersCall('save', {providerId: id, provider: {...p, enabled: turnOn}});
+    await renderProvidersAdminUI();
+    await loadProvidersPublic();
+  }catch(e){ showToast('Cập nhật thất bại: ' + (e.message||'')); }
+};
+window.testProviderAdmin = async function(id){
+  if(!checkAdmin()) return;
+  showToast('Đang test, chờ chút...');
+  try{
+    const {shortUrl} = await manageProvidersCall('test', {providerId: id, testUrl: 'https://google.com'});
+    await askConfirm({title:'Kết quả test', message:'Link tạo được: ' + shortUrl, okText:'OK'});
+  }catch(e){ showToast('Test thất bại: ' + (e.message||'')); }
+};
+document.getElementById('providerFormReset')?.addEventListener('click', ()=>{
+  editingProviderId = null;
+  document.getElementById('pvName').value = '';
+  document.getElementById('pvUrlTemplate').value = '';
+  document.getElementById('pvApiKey').value = '';
+  document.getElementById('pvMethod').value = 'GET';
+  document.getElementById('pvResponseType').value = 'text';
+  document.getElementById('pvJsonPath').value = '';
+  document.getElementById('pvEnabled').checked = true;
+  document.getElementById('providerFormTitle').textContent = 'Thêm nhà cung cấp mới';
+});
+document.getElementById('saveProviderBtn')?.addEventListener('click', async ()=>{
+  if(!checkAdmin()) return;
+  const name = document.getElementById('pvName').value.trim();
+  const apiUrlTemplate = document.getElementById('pvUrlTemplate').value.trim();
+  const apiKey = document.getElementById('pvApiKey').value.trim();
+  const method = document.getElementById('pvMethod').value;
+  const responseType = document.getElementById('pvResponseType').value;
+  const jsonPath = document.getElementById('pvJsonPath').value.trim();
+  const enabled = document.getElementById('pvEnabled').checked;
+  if(!name || !apiUrlTemplate){ showToast('Vui lòng nhập tên và URL mẫu.'); return; }
+  if(!apiUrlTemplate.includes('{URL}')){ showToast('URL mẫu phải chứa {URL} (chỗ điền link đích).'); return; }
+  try{
+    await manageProvidersCall('save', {providerId: editingProviderId, provider: {name, apiUrlTemplate, apiKey, method, responseType, jsonPath, enabled}});
+    showToast('Đã lưu nhà cung cấp!');
+    document.getElementById('providerFormReset').click();
+    await renderProvidersAdminUI();
+    await loadProvidersPublic();
+    fillTaskProviderSelect();
+  }catch(e){ showToast('Lưu thất bại: ' + (e.message||'')); }
+});
 
 function getCollectionName(id){
   if(!id) return '';
@@ -2296,7 +2441,7 @@ function renderTasks(){
       ${t.desc ? `<div class="task-desc">${linkify(t.desc)}</div>` : ''}
       ${admin ? `
       <div class="task-return-url">
-        <span class="label" style="margin:0 0 6px;">LINK QUAY VỀ GỐC (chưa token — Link4m sẽ sinh link mới có token mỗi lượt)</span>
+        <span class="label" style="margin:0 0 6px;">LINK QUAY VỀ GỐC (chưa token — hệ thống sẽ sinh link mới có token mỗi lượt qua nhà cung cấp đã chọn)</span>
         <div class="task-return-url-row">
           <input type="text" readonly value="${buildTaskReturnUrl(t.id)}" onclick="this.select()">
           <button class="mini-btn" onclick="copyTaskReturnUrl('${t.id}')">Copy</button>
@@ -2340,7 +2485,7 @@ window.startTask = async function(btnEl, id){
     } else {
       token = Math.random().toString(36).slice(2) + Date.now().toString(36);
       const longUrl = buildTaskReturnUrl(t.id, token);
-      openUrl = await shortenWithLink4m(longUrl);
+      openUrl = await shortenViaProvider(t.providerId, longUrl);
     }
     setTaskStartMarker(cur.username, id, token);
     window.open(openUrl, '_blank');
@@ -2415,7 +2560,7 @@ async function autoClaimTaskFromReturn(taskId, token){
 document.getElementById('openAddTaskBtn').addEventListener('click', ()=>{
   if(!checkAdmin()) return;
   editingTaskId = null;
-  // "Giữ chỗ" 1 id ngay từ lúc mở form, để link quay về (và link rút gọn Link4m tạo tự động) đã ổn định trước khi lưu.
+  // "Giữ chỗ" 1 id ngay từ lúc mở form, để link quay về (và link rút gọn tạo tự động) đã ổn định trước khi lưu.
   currentFormTaskId = 't'+Date.now();
   document.getElementById('taskFormTitle').textContent = 'Thêm nhiệm vụ mới';
   document.getElementById('tTitle').value = '';
@@ -2425,6 +2570,7 @@ document.getElementById('openAddTaskBtn').addEventListener('click', ()=>{
   document.getElementById('tMaxAttempts').value = '2';
   document.getElementById('tActive').checked = true;
   document.getElementById('tReturnUrlPreview').value = buildTaskReturnUrl(currentFormTaskId);
+  fillTaskProviderSelect('');
   fillSettingsFormUI();
   switchView('task-form');
 });
@@ -2443,6 +2589,7 @@ window.startEditTask = function(id){
   document.getElementById('tMaxAttempts').value = t.maxAttemptsPerDay ? String(t.maxAttemptsPerDay) : '2';
   document.getElementById('tActive').checked = t.active !== false;
   document.getElementById('tReturnUrlPreview').value = buildTaskReturnUrl(currentFormTaskId);
+  fillTaskProviderSelect(t.providerId || '');
   switchView('task-form');
 };
 document.getElementById('copyFormReturnUrlBtn').addEventListener('click', async ()=>{
@@ -2453,18 +2600,20 @@ document.getElementById('copyFormReturnUrlBtn').addEventListener('click', async 
 document.getElementById('autoShortenBtn').addEventListener('click', async ()=>{
   if(!checkAdmin()) return;
   if(!currentFormTaskId){ showToast('Có lỗi, hãy mở lại form nhiệm vụ.'); return; }
+  const providerId = document.getElementById('tProviderId').value;
+  if(!providerId){ showToast('Hãy chọn 1 nhà cung cấp ở trên trước.'); return; }
   const btn = document.getElementById('autoShortenBtn');
   const longUrl = buildTaskReturnUrl(currentFormTaskId);
   btn.disabled = true;
   const oldText = btn.textContent;
   btn.textContent = 'Đang tạo link...';
   try{
-    const shortUrl = await shortenWithLink4m(longUrl);
+    const shortUrl = await shortenViaProvider(providerId, longUrl);
     document.getElementById('tLink').value = shortUrl;
-    showToast('Đã tạo link cố định! (Nếu để trống ô này, hệ thống sẽ tự tạo link mới qua Link4m mỗi lượt thay vì dùng 1 link cố định.)');
+    showToast('Đã tạo link cố định! (Nếu để trống ô này, hệ thống sẽ tự tạo link mới qua nhà cung cấp đã chọn mỗi lượt thay vì dùng 1 link cố định.)');
   }catch(e){
     console.error(e);
-    showToast(e.message || 'Tạo link Link4m thất bại, thử lại nhé.');
+    showToast(e.message || 'Tạo link thất bại, thử lại nhé.');
   }finally{
     btn.disabled = false;
     btn.textContent = oldText;
@@ -2500,14 +2649,15 @@ document.getElementById('saveTaskBtn').addEventListener('click', async ()=>{
   const title = document.getElementById('tTitle').value.trim();
   const desc = document.getElementById('tDesc').value.trim();
   const link = document.getElementById('tLink').value.trim();
+  const providerId = document.getElementById('tProviderId').value || '';
   const rewardRaw = document.getElementById('tReward').value.trim();
   const reward = rewardRaw ? Math.max(0, parseInt(rewardRaw, 10) || 0) : 0;
   const maxAttemptsRaw = document.getElementById('tMaxAttempts').value.trim();
   const maxAttemptsPerDay = maxAttemptsRaw ? Math.max(1, parseInt(maxAttemptsRaw, 10) || 1) : 2;
   const active = document.getElementById('tActive').checked;
   if(!title){ showToast('Vui lòng nhập tên nhiệm vụ.'); return; }
-  if(!link && !(appSettings.link4mApiKey||'').trim()){
-    showToast('Chưa có API Key Link4m để tự tạo link — hãy nhập "Link cố định" hoặc cấu hình API Key Link4m ở Cài đặt.');
+  if(!link && !providerId){
+    showToast('Hãy chọn 1 nhà cung cấp rút gọn link, hoặc nhập "Link cố định" thủ công.');
     return;
   }
   if(reward <= 0){ showToast('Vui lòng nhập số V-coin thưởng lớn hơn 0.'); return; }
@@ -2522,10 +2672,10 @@ document.getElementById('saveTaskBtn').addEventListener('click', async ()=>{
   let taskToSave;
   if(editingTaskId){
     const t = tasks.find(x=>x.id===editingTaskId);
-    t.title = title; t.desc = desc; t.link = link; t.reward = reward; t.maxAttemptsPerDay = maxAttemptsPerDay; t.active = active;
+    t.title = title; t.desc = desc; t.link = link; t.providerId = providerId; t.reward = reward; t.maxAttemptsPerDay = maxAttemptsPerDay; t.active = active;
     taskToSave = t;
   } else {
-    taskToSave = {id: currentFormTaskId || ('t'+Date.now()), title, desc, link, reward, maxAttemptsPerDay, active, createdAt: Date.now()};
+    taskToSave = {id: currentFormTaskId || ('t'+Date.now()), title, desc, link, providerId, reward, maxAttemptsPerDay, active, createdAt: Date.now()};
     tasks.push(taskToSave);
   }
   const ok = await saveTaskDoc(taskToSave);
@@ -2560,6 +2710,9 @@ document.getElementById('saveTaskBtn').addEventListener('click', async ()=>{
   updateVolumeIcon();
   await loadSettings();
   fillSettingsFormUI();
+  await loadProvidersPublic();
+  fillTaskProviderSelect();
+  if(isAdminUnlocked()) await renderProvidersAdminUI();
   collections = await loadCollections();
   renderCollectionChipsUI();
   await renderProducts();
