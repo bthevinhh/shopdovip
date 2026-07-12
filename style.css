@@ -406,6 +406,11 @@ body.user-mode .user-only{display:revert !important;}
   animation:popin .4s var(--ease) both;
 }
 .form-card h2{font-size:23px;}
+#advancedSettingsDetails summary{list-style:none;display:flex;align-items:center;justify-content:space-between;}
+#advancedSettingsDetails summary::-webkit-details-marker{display:none;}
+#advancedSettingsDetails summary::after{content:'▾';transition:transform .18s var(--ease);color:var(--amber);}
+#advancedSettingsDetails[open] summary::after{transform:rotate(180deg);}
+#advancedSettingsDetails h3, #advancedSettingsDetails h4{color:var(--text-light);}
 .form-card label{
   display:block;font-family:'Space Mono',monospace;font-size:11px;
   text-transform:uppercase;letter-spacing:.1em;color:var(--amber);font-weight:700;

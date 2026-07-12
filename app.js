@@ -543,7 +543,6 @@ async function submitUserLogin(){
     renderCollectionChipsUI();
     renderDashboard();
     renderTasks();
-    renderProvidersAdminUI();
     return;
   }
 
@@ -2572,6 +2571,7 @@ document.getElementById('openAddTaskBtn').addEventListener('click', ()=>{
   document.getElementById('tReturnUrlPreview').value = buildTaskReturnUrl(currentFormTaskId);
   fillTaskProviderSelect('');
   fillSettingsFormUI();
+  renderProvidersAdminUI();
   switchView('task-form');
 });
 document.getElementById('cancelTaskFormBtn').addEventListener('click', ()=>switchView('tasks'));
@@ -2590,6 +2590,8 @@ window.startEditTask = function(id){
   document.getElementById('tActive').checked = t.active !== false;
   document.getElementById('tReturnUrlPreview').value = buildTaskReturnUrl(currentFormTaskId);
   fillTaskProviderSelect(t.providerId || '');
+  fillSettingsFormUI();
+  renderProvidersAdminUI();
   switchView('task-form');
 };
 document.getElementById('copyFormReturnUrlBtn').addEventListener('click', async ()=>{
@@ -2712,7 +2714,6 @@ document.getElementById('saveTaskBtn').addEventListener('click', async ()=>{
   fillSettingsFormUI();
   await loadProvidersPublic();
   fillTaskProviderSelect();
-  if(isAdminUnlocked()) await renderProvidersAdminUI();
   collections = await loadCollections();
   renderCollectionChipsUI();
   await renderProducts();
