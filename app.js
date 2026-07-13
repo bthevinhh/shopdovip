@@ -2,8 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
-
 // ---------------- CONFIG ----------------
 const ADMIN_USERNAME = "adminbuivinh0804";
 const ADMIN_PASSWORD = "hmm_0804";
@@ -18,11 +16,9 @@ const firebaseConfig = {
   measurementId: "G-7N4C0D55CJ"
 };
 let db = null;
-let cloudFns = null;
 try{
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  cloudFns = getFunctions(app); // dùng để gọi Cloud Function (proxy rút gọn link, tránh CORS)
 }catch(e){
   console.error('Chưa cấu hình Firebase đúng cách:', e);
 }
@@ -301,36 +297,6 @@ async function loadCollections(){
     return [];
   }
 }
-// ---------------- NHIỆM VỤ (Tasks - vượt link nhận V-coin) ----------------
-async function loadTasks(){
-  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return []; }
-  try{
-    const snap = await getDocs(collection(db, 'tasks'));
-    const list = snap.docs.map(d=>d.data());
-    list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    return list;
-  }catch(e){
-    console.error(e);
-    return [];
-  }
-}
-async function saveTaskDoc(t){
-  if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
-  try{
-    await setDoc(doc(db,'tasks', t.id), t);
-    return true;
-  }catch(e){
-    console.error(e);
-    showToast('Lỗi lưu nhiệm vụ: ' + (e && e.message ? e.message : 'không rõ nguyên nhân'));
-    return false;
-  }
-}
-async function removeTaskDoc(id){
-  if(!db) return;
-  try{ await deleteDoc(doc(db,'tasks', id)); }
-  catch(e){ console.error(e); showToast('Lỗi xoá nhiệm vụ.'); }
-}
-
 async function saveCollectionDoc(c){
   if(!db){ showToast('Chưa cấu hình Firebase — xem hướng dẫn trong file.'); return false; }
   try{
@@ -492,23 +458,17 @@ async function submitUserRegister(){
     const passwordHash = await hashPassword(password, salt);
     const userDoc = {
       username, displayName, salt, passwordHash,
-      vcoin: 0, completedTaskIds: [], taskAttempts: {},
+      vcoin: 0,
       createdAt: Date.now()
     };
     const ok = await saveUserDoc(userDoc);
     btn.disabled = false;
     if(!ok) return;
-    setCurrentUser({username, displayName, vcoin: 0, completedTaskIds: [], taskAttempts: {}});
+    setCurrentUser({username, displayName, vcoin: 0});
     renderAuthUI();
     closeUserAuthModal();
     showToast('Tạo tài khoản thành công! Chào mừng ' + displayName + '.');
     renderFavoritesUI();
-    renderTasks();
-    const pendingClaim = readPendingClaim();
-    if(pendingClaim){
-      clearPendingClaim();
-      await autoClaimTaskFromReturn(pendingClaim.id, pendingClaim.token);
-    }
   }catch(e){
     console.error(e);
     errEl.textContent = 'Có lỗi xảy ra, thử lại nhé.';
@@ -542,7 +502,6 @@ async function submitUserLogin(){
     applyFiltersAndRender();
     renderCollectionChipsUI();
     renderDashboard();
-    renderTasks();
     return;
   }
 
@@ -563,19 +522,13 @@ async function submitUserLogin(){
       btn.disabled = false;
       return;
     }
-    setCurrentUser({username: userDoc.username, displayName: userDoc.displayName, vcoin: userDoc.vcoin||0, completedTaskIds: userDoc.completedTaskIds||[], taskAttempts: userDoc.taskAttempts||{}});
+    setCurrentUser({username: userDoc.username, displayName: userDoc.displayName, vcoin: userDoc.vcoin||0});
     renderAuthUI();
     closeUserAuthModal();
     btn.disabled = false;
     showToast('Đăng nhập thành công! Chào mừng trở lại, ' + userDoc.displayName + '.');
     renderFavoritesUI();
     applyFiltersAndRender();
-    renderTasks();
-    const pendingClaim = readPendingClaim();
-    if(pendingClaim){
-      clearPendingClaim();
-      await autoClaimTaskFromReturn(pendingClaim.id, pendingClaim.token);
-    }
   }catch(e){
     console.error(e);
     errEl.textContent = 'Có lỗi xảy ra, thử lại nhé.';
@@ -670,210 +623,6 @@ let selectedIds = new Set();
 let productsLoaded = false;
 const PAGE_SIZE = 24;
 let visibleCount = PAGE_SIZE;
-
-// ---------------- TASKS (nhiệm vụ vượt link -> V-coin) ----------------
-let tasks = [];
-let tasksLoaded = false;
-let editingTaskId = null;
-let startedTasks = new Set(); // id nhiệm vụ đã bấm "vượt link" trong phiên hiện tại, chờ xác nhận
-
-// ---------------- SETTINGS (giới hạn số nhiệm vụ hoạt động) ----------------
-let appSettings = { maxActiveTasks: 0 }; // maxActiveTasks = 0 nghĩa là không giới hạn
-let currentFormTaskId = null; // id (đã "giữ chỗ") của nhiệm vụ đang thêm/sửa trong form, dùng để build link quay về ổn định trước khi lưu
-async function loadSettings(){
-  if(!db) return;
-  try{
-    const snap = await getDoc(doc(db,'settings','general'));
-    if(snap.exists()){
-      const d = snap.data();
-      appSettings.maxActiveTasks = Number(d.maxActiveTasks) || 0;
-    }
-  }catch(e){ console.error('Không tải được cài đặt:', e); }
-}
-async function saveSettingsDoc(){
-  if(!db){ showToast('Chưa cấu hình Firebase.'); return false; }
-  try{
-    await setDoc(doc(db,'settings','general'), {
-      maxActiveTasks: Number(appSettings.maxActiveTasks) || 0
-    });
-    return true;
-  }catch(e){ console.error(e); showToast('Lưu cài đặt thất bại.'); return false; }
-}
-function fillSettingsFormUI(){
-  const maxEl = document.getElementById('stMaxActiveTasks');
-  if(maxEl) maxEl.value = appSettings.maxActiveTasks ? String(appSettings.maxActiveTasks) : '';
-}
-document.getElementById('saveTaskSettingsBtn').addEventListener('click', async ()=>{
-  if(!checkAdmin()) return;
-  const maxRaw = document.getElementById('stMaxActiveTasks').value.trim();
-  const max = maxRaw ? Math.max(0, parseInt(maxRaw, 10) || 0) : 0;
-  appSettings.maxActiveTasks = max;
-  const ok = await saveSettingsDoc();
-  if(ok) showToast('Đã lưu cài đặt!');
-});
-// Đếm số nhiệm vụ đang bật (active), có thể loại trừ 1 id (khi đang sửa chính nhiệm vụ đó)
-function countActiveTasks(excludeId){
-  return tasks.filter(t => t.active !== false && t.id !== excludeId).length;
-}
-
-// ---------------- NHÀ CUNG CẤP RÚT GỌN LINK (Link4m, LinkTot, Layma, Uptolink...) ----------------
-// Toàn bộ URL API + API Key được lưu ở server (Firestore settings/providersPrivate, client KHÔNG đọc được)
-// và chỉ được gọi thông qua Cloud Function (functions/index.js) để tránh lỗi CORS khi gọi thẳng từ trình duyệt.
-// Client chỉ thấy danh sách "công khai" (tên + bật/tắt) qua settings/providersPublic để hiển thị dropdown.
-let providersPublic = []; // [{id, name, enabled}]
-async function loadProvidersPublic(){
-  if(!db) return;
-  try{
-    const snap = await getDoc(doc(db,'settings','providersPublic'));
-    const list = snap.exists() ? (snap.data().list || {}) : {};
-    providersPublic = Object.keys(list).map(id => ({id, name: list[id].name, enabled: list[id].enabled !== false}));
-  }catch(e){ console.error('Không tải được danh sách nhà cung cấp:', e); providersPublic = []; }
-}
-function callCloudFn(name, payload){
-  if(!cloudFns) return Promise.reject(new Error('Chưa cấu hình Cloud Functions.'));
-  return httpsCallable(cloudFns, name)(payload).then(res => res.data);
-}
-// Gọi Cloud Function để rút gọn "longUrl" bằng nhà cung cấp đã chọn (chạy phía server, không bị CORS)
-async function shortenViaProvider(providerId, longUrl){
-  if(!providerId) throw new Error('Nhiệm vụ chưa chọn nhà cung cấp rút gọn link.');
-  try{
-    const data = await callCloudFn('shortenLink', {providerId, longUrl});
-    if(!data || !data.shortUrl) throw new Error('Không nhận được link rút gọn.');
-    return data.shortUrl;
-  }catch(e){
-    console.error(e);
-    throw new Error(e.message || 'Tạo link thất bại, thử lại nhé. (Kiểm tra Cloud Function đã deploy chưa?)');
-  }
-}
-function providerOptionsHtml(selectedId){
-  if(providersPublic.length === 0){
-    return `<option value="">-- Chưa có nhà cung cấp nào, thêm ở mục "Nhà cung cấp rút gọn link" --</option>`;
-  }
-  return providersPublic.filter(p=>p.enabled).map(p =>
-    `<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escapeHtml(p.name)}</option>`
-  ).join('');
-}
-function fillTaskProviderSelect(selectedId){
-  const sel = document.getElementById('tProviderId');
-  if(!sel) return;
-  sel.innerHTML = `<option value="">-- Không dùng (chỉ dùng Link cố định) --</option>` + providerOptionsHtml(selectedId);
-}
-// ---- Quản trị (chỉ admin, cần adminSecret trùng với ADMIN_PASSWORD đã cấu hình trên Cloud Function) ----
-async function manageProvidersCall(action, extra){
-  return callCloudFn('manageProviders', {adminSecret: ADMIN_PASSWORD, action, ...extra});
-}
-async function renderProvidersAdminUI(){
-  const list = document.getElementById('providerAdminList');
-  if(!list || !isAdminUnlocked()) return;
-  list.innerHTML = `<div class="empty-state">Đang tải danh sách nhà cung cấp...</div>`;
-  try{
-    const {list: providers} = await manageProvidersCall('list', {});
-    const ids = Object.keys(providers||{});
-    if(ids.length === 0){
-      list.innerHTML = `<div class="empty-state">Chưa có nhà cung cấp nào. Thêm mới ở form bên dưới.</div>`;
-      return;
-    }
-    list.innerHTML = ids.map(id => {
-      const p = providers[id];
-      return `
-      <div class="task-card" style="padding:14px 16px;">
-        <div class="task-card-top">
-          <h3 style="font-size:15px;">${escapeHtml(p.name)}</h3>
-          ${p.enabled===false ? `<div class="task-inactive-badge">Đang tắt</div>` : ''}
-        </div>
-        <div class="task-desc" style="word-break:break-all;">${escapeHtml(p.apiUrlTemplate)}</div>
-        <div class="task-actions">
-          <button class="mini-btn" onclick="editProviderAdmin('${id}')">Sửa</button>
-          <button class="mini-btn" onclick="testProviderAdmin('${id}')">Test</button>
-          <button class="mini-btn" onclick="deleteProviderAdmin('${id}')">Xoá</button>
-          <button class="pin-btn ${p.enabled!==false?'pinned':''}" onclick="toggleProviderAdmin('${id}', ${p.enabled===false})">${p.enabled!==false?'★ Đang bật':'☆ Đang tắt'}</button>
-        </div>
-      </div>`;
-    }).join('');
-  }catch(e){
-    console.error(e);
-    list.innerHTML = `<div class="empty-state">Không tải được danh sách (Cloud Function đã deploy & cấu hình admin secret chưa?): ${escapeHtml(e.message||'')}</div>`;
-  }
-}
-let editingProviderId = null;
-window.editProviderAdmin = async function(id){
-  if(!checkAdmin()) return;
-  try{
-    const {list} = await manageProvidersCall('list', {});
-    const p = list[id];
-    if(!p) return;
-    editingProviderId = id;
-    document.getElementById('pvName').value = p.name || '';
-    document.getElementById('pvUrlTemplate').value = p.apiUrlTemplate || '';
-    document.getElementById('pvApiKey').value = p.apiKey || '';
-    document.getElementById('pvMethod').value = p.method || 'GET';
-    document.getElementById('pvResponseType').value = p.responseType || 'text';
-    document.getElementById('pvJsonPath').value = p.jsonPath || '';
-    document.getElementById('pvEnabled').checked = p.enabled !== false;
-    document.getElementById('providerFormTitle').textContent = 'Sửa nhà cung cấp: ' + p.name;
-  }catch(e){ showToast('Lỗi tải nhà cung cấp: ' + (e.message||'')); }
-};
-window.deleteProviderAdmin = async function(id){
-  if(!checkAdmin()) return;
-  const ok = await askConfirm({title:'Xoá nhà cung cấp', message:'Xoá nhà cung cấp này? Các nhiệm vụ đang dùng sẽ không tạo được link nữa.', okText:'Xoá', danger:true});
-  if(!ok) return;
-  try{
-    await manageProvidersCall('delete', {providerId: id});
-    showToast('Đã xoá.');
-    await renderProvidersAdminUI();
-    await loadProvidersPublic();
-  }catch(e){ showToast('Xoá thất bại: ' + (e.message||'')); }
-};
-window.toggleProviderAdmin = async function(id, turnOn){
-  if(!checkAdmin()) return;
-  try{
-    const {list} = await manageProvidersCall('list', {});
-    const p = list[id];
-    if(!p) return;
-    await manageProvidersCall('save', {providerId: id, provider: {...p, enabled: turnOn}});
-    await renderProvidersAdminUI();
-    await loadProvidersPublic();
-  }catch(e){ showToast('Cập nhật thất bại: ' + (e.message||'')); }
-};
-window.testProviderAdmin = async function(id){
-  if(!checkAdmin()) return;
-  showToast('Đang test, chờ chút...');
-  try{
-    const {shortUrl} = await manageProvidersCall('test', {providerId: id, testUrl: 'https://google.com'});
-    await askConfirm({title:'Kết quả test', message:'Link tạo được: ' + shortUrl, okText:'OK'});
-  }catch(e){ showToast('Test thất bại: ' + (e.message||'')); }
-};
-document.getElementById('providerFormReset')?.addEventListener('click', ()=>{
-  editingProviderId = null;
-  document.getElementById('pvName').value = '';
-  document.getElementById('pvUrlTemplate').value = '';
-  document.getElementById('pvApiKey').value = '';
-  document.getElementById('pvMethod').value = 'GET';
-  document.getElementById('pvResponseType').value = 'text';
-  document.getElementById('pvJsonPath').value = '';
-  document.getElementById('pvEnabled').checked = true;
-  document.getElementById('providerFormTitle').textContent = 'Thêm nhà cung cấp mới';
-});
-document.getElementById('saveProviderBtn')?.addEventListener('click', async ()=>{
-  if(!checkAdmin()) return;
-  const name = document.getElementById('pvName').value.trim();
-  const apiUrlTemplate = document.getElementById('pvUrlTemplate').value.trim();
-  const apiKey = document.getElementById('pvApiKey').value.trim();
-  const method = document.getElementById('pvMethod').value;
-  const responseType = document.getElementById('pvResponseType').value;
-  const jsonPath = document.getElementById('pvJsonPath').value.trim();
-  const enabled = document.getElementById('pvEnabled').checked;
-  if(!name || !apiUrlTemplate){ showToast('Vui lòng nhập tên và URL mẫu.'); return; }
-  if(!apiUrlTemplate.includes('{URL}')){ showToast('URL mẫu phải chứa {URL} (chỗ điền link đích).'); return; }
-  try{
-    await manageProvidersCall('save', {providerId: editingProviderId, provider: {name, apiUrlTemplate, apiKey, method, responseType, jsonPath, enabled}});
-    showToast('Đã lưu nhà cung cấp!');
-    document.getElementById('providerFormReset').click();
-    await renderProvidersAdminUI();
-    await loadProvidersPublic();
-    fillTaskProviderSelect();
-  }catch(e){ showToast('Lưu thất bại: ' + (e.message||'')); }
-});
 
 function getCollectionName(id){
   if(!id) return '';
@@ -1081,7 +830,7 @@ window.claimProduct = async function(id){
   if(price > 0 && !isAdminUnlocked()){
     const cur = getCurrentUser();
     if((cur.vcoin||0) < price){
-      showToast(`Bạn cần ${price} V-coin để nhận sản phẩm này (hiện có ${cur.vcoin||0}). Hoàn thành nhiệm vụ để kiếm thêm V-coin nhé.`);
+      showToast(`Bạn cần ${price} V-coin để nhận sản phẩm này (hiện có ${cur.vcoin||0}).`);
       return;
     }
     const ok = await askConfirm({title:'Xác nhận đổi V-coin', message:`Dùng ${price} V-coin để nhận sản phẩm "${p.title}"?`, okText:'Đổi ngay'});
@@ -1464,8 +1213,6 @@ document.getElementById('loginBtn').addEventListener('click', ()=>{
     exitBulkMode();
     showToast('Đã thoát quyền quản trị.');
     applyFiltersAndRender();
-    startedTasks.clear();
-    renderTasks();
   } else if(isUserLoggedIn()){
     clearCurrentUser();
     renderAuthUI();
@@ -1474,8 +1221,6 @@ document.getElementById('loginBtn').addEventListener('click', ()=>{
     applyFiltersAndRender();
     renderFavoritesUI();
     showToast('Đã đăng xuất tài khoản.');
-    startedTasks.clear();
-    renderTasks();
   } else {
     openUserAuthModal('login');
   }
@@ -2295,433 +2040,22 @@ document.addEventListener('keydown', e=>{
   if(e.key === 'Escape') queueOverlay.classList.remove('open');
 });
 
-// ---------------- TASKS UI (nhiệm vụ vượt link -> nhận V-coin, có thể làm nhiều lượt/ngày) ----------------
-function todayStr(){
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-// Số lượt đã dùng HÔM NAY cho 1 nhiệm vụ, dựa trên dữ liệu user (đồng bộ từ Firestore).
-function getTodayUsedCount(userObj, taskId){
-  const rec = userObj && userObj.taskAttempts ? userObj.taskAttempts[taskId] : null;
-  if(!rec || rec.date !== todayStr()) return 0;
-  return rec.count || 0;
-}
-function getMaxAttempts(t){
-  return Math.max(1, parseInt(t.maxAttemptsPerDay, 10) || 1);
-}
-function getRemainingAttempts(userObj, t){
-  return Math.max(0, getMaxAttempts(t) - getTodayUsedCount(userObj, t.id));
-}
-// Đánh dấu trên trình duyệt là user đã bấm "vượt link" cho 1 nhiệm vụ (kèm token của LƯỢT hiện tại, nếu có).
-// Dùng để xác nhận (ở mức tương đối, vì không có backend) khi họ được đưa quay lại qua link return URL.
-function taskStartKey(username, taskId){ return `taskStart_${username}_${taskId}`; }
-function setTaskStartMarker(username, taskId, token){
-  try{ localStorage.setItem(taskStartKey(username, taskId), JSON.stringify({token: token||null, ts: Date.now()})); }catch(e){}
-}
-function getTaskStartMarker(username, taskId){
-  try{
-    const raw = localStorage.getItem(taskStartKey(username, taskId));
-    if(!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed && parsed.ts ? parsed : null;
-  }catch(e){ return null; }
-}
-function clearTaskStartMarker(username, taskId){
-  try{ localStorage.removeItem(taskStartKey(username, taskId)); }catch(e){}
-}
-// Lưu/đọc/xoá "lượt đang chờ đăng nhập" (khi trang rút gọn quay về mà user chưa đăng nhập).
-function savePendingClaim(id, token){
-  try{ sessionStorage.setItem('pendingClaim', JSON.stringify({id, token: token||null})); }catch(e){}
-}
-function readPendingClaim(){
-  try{
-    const raw = sessionStorage.getItem('pendingClaim');
-    return raw ? JSON.parse(raw) : null;
-  }catch(e){ return null; }
-}
-function clearPendingClaim(){ try{ sessionStorage.removeItem('pendingClaim'); }catch(e){} }
-// "Link quay về": đích mà trang rút gọn (Link4m...) sẽ đưa người dùng trở lại sau khi vượt xong.
-// Kèm token ngẫu nhiên cho từng LƯỢT để: (1) link luôn khác nhau mỗi lần tạo qua API Link4m (tránh trùng/spam),
-// (2) xác nhận đúng lượt đã bắt đầu khi cộng V-coin, tránh cộng nhầm/cộng lặp qua F5.
-function buildTaskReturnUrl(id, token){
-  let url = window.location.origin + window.location.pathname + '?claim=' + encodeURIComponent(id);
-  if(token) url += '&t=' + encodeURIComponent(token);
-  return url;
-}
-window.copyTaskReturnUrl = async function(id){
-  const url = buildTaskReturnUrl(id);
-  try{
-    await navigator.clipboard.writeText(url);
-    showToast('Đã copy link quay về!');
-  }catch(e){
-    showToast('Không copy được, hãy bôi đen và copy thủ công trong ô.');
-  }
-};
-// Cộng V-coin cho 1 LƯỢT của nhiệm vụ (dùng chung cho cả xác nhận thủ công lẫn tự động khi quay về).
-// Luôn tải lại user mới nhất từ Firestore trước khi ghi, tránh ghi đè số dư/lịch sử cũ.
-async function grantTaskReward(t, token){
-  const cur = getCurrentUser();
-  if(!cur) return {ok:false};
-  const freshUser = await loadUserDoc(cur.username);
-  if(!freshUser) return {ok:false};
-
-  const marker = getTaskStartMarker(cur.username, t.id);
-  // Nếu lượt này có token (link tự tạo qua API) thì bắt buộc phải khớp đúng token đã lưu khi bấm "Lấy link vượt",
-  // tránh trường hợp mở lại URL quay về cũ để cộng V-coin nhiều lần. Nhiệm vụ dùng "Link cố định" (không token) thì
-  // chỉ cần có marker (đã bấm nút) là đủ, theo đúng cách hoạt động trước đây.
-  if(marker && marker.token && token && marker.token !== token){
-    return {ok:false, reason:'token_mismatch'};
-  }
-  if(!marker){
-    return {ok:false, reason:'no_marker'};
-  }
-
-  const used = getTodayUsedCount(freshUser, t.id);
-  const max = getMaxAttempts(t);
-  if(used >= max){
-    setCurrentUser({...cur, vcoin: freshUser.vcoin||0, completedTaskIds: freshUser.completedTaskIds||[], taskAttempts: freshUser.taskAttempts||{}});
-    return {ok:true, alreadyDone:true};
-  }
-
-  freshUser.vcoin = (freshUser.vcoin||0) + (t.reward||0);
-  freshUser.taskAttempts = {...(freshUser.taskAttempts||{}), [t.id]: {date: todayStr(), count: used+1}};
-  const saved = await saveUserDoc(freshUser);
-  if(!saved) return {ok:false};
-  setCurrentUser({...cur, vcoin: freshUser.vcoin, completedTaskIds: freshUser.completedTaskIds||[], taskAttempts: freshUser.taskAttempts});
-  return {ok:true, alreadyDone:false, remaining: max-(used+1)};
-}
-async function renderTasksData(){
-  tasks = await loadTasks();
-  tasksLoaded = true;
-  renderTasks();
-}
-function renderTasks(){
-  const list = document.getElementById('taskList');
-  if(!list) return;
-  const admin = isAdminUnlocked();
-  const cur = getCurrentUser();
-  const visibleTasks = admin ? tasks : tasks.filter(t=>t.active !== false);
-  document.getElementById('taskCountLabel').textContent = visibleTasks.length;
-  if(visibleTasks.length === 0){
-    list.innerHTML = `<div class="empty-state">${admin ? 'Chưa có nhiệm vụ nào. Nhấn "+ Thêm nhiệm vụ" để bắt đầu.' : 'Hiện chưa có nhiệm vụ nào, quay lại sau nhé.'}</div>`;
-    return;
-  }
-  list.innerHTML = visibleTasks.map(t=>{
-    const max = getMaxAttempts(t);
-    const used = (!admin && cur) ? getTodayUsedCount(cur, t.id) : 0;
-    const remaining = max - used;
-    const isMaxedOut = !admin && cur && remaining <= 0;
-    const isStarted = startedTasks.has(t.id);
-    let actionsHtml = '';
-    if(admin){
-      actionsHtml = '';
-    } else if(!isUserLoggedIn()){
-      actionsHtml = `<button class="stamp-btn" onclick="openUserAuthModal('login')">Đăng nhập để làm nhiệm vụ</button>`;
-    } else if(isMaxedOut){
-      actionsHtml = `<button class="stamp-btn" disabled style="opacity:.5;cursor:not-allowed;">✔ Hết lượt hôm nay</button>`;
-    } else if(isStarted){
-      actionsHtml = `
-        <button class="ghost-btn" onclick="startTask(this,'${t.id}')">🔗 Mở lại link</button>
-        <button class="stamp-btn" onclick="confirmTaskDone('${t.id}')">✅ Tôi đã hoàn thành</button>
-      `;
-    } else {
-      actionsHtml = `<button class="stamp-btn" onclick="startTask(this,'${t.id}')">🔗 Lấy link vượt</button>`;
-    }
-    return `
-    <div class="task-card ${isMaxedOut?'completed':''}">
-      <div class="task-card-top">
-        <h3>${escapeHtml(t.title)}</h3>
-        ${admin && t.active===false ? `<div class="task-inactive-badge">Đang tắt</div>` : ''}
-      </div>
-      <div class="task-badge-row">
-        <div class="task-reward-badge">🪙 ${t.reward||0} V-coin</div>
-        <div class="task-attempts-badge">⏱ ${admin ? '0' : used}/${max} lượt</div>
-      </div>
-      ${t.desc ? `<div class="task-desc">${linkify(t.desc)}</div>` : ''}
-      ${admin ? `
-      <div class="task-return-url">
-        <span class="label" style="margin:0 0 6px;">LINK QUAY VỀ GỐC (chưa token — hệ thống sẽ sinh link mới có token mỗi lượt qua nhà cung cấp đã chọn)</span>
-        <div class="task-return-url-row">
-          <input type="text" readonly value="${buildTaskReturnUrl(t.id)}" onclick="this.select()">
-          <button class="mini-btn" onclick="copyTaskReturnUrl('${t.id}')">Copy</button>
-        </div>
-      </div>` : ''}
-      <div class="task-actions">${actionsHtml}</div>
-      ${admin ? `
-      <div class="card-admin-row" style="opacity:1;margin-top:12px;">
-        <button class="mini-btn" onclick="startEditTask('${t.id}')">Sửa</button>
-        <button class="mini-btn" onclick="deleteTaskAdmin('${t.id}')">Xoá</button>
-        <button class="pin-btn ${t.active!==false?'pinned':''}" onclick="toggleTaskActive('${t.id}')">${t.active!==false?'★ Đang bật':'☆ Đang tắt'}</button>
-      </div>` : ''}
-    </div>`;
-  }).join('');
-}
-// Bấm "Lấy link vượt": nếu nhiệm vụ có Link cố định (admin nhập tay) thì dùng luôn; nếu không, tự động gọi API
-// Link4m để tạo 1 link rút gọn MỚI cho đúng lượt này (không trùng lượt trước, hạn chế spam/replay).
-window.startTask = async function(btnEl, id){
-  if(!isUserLoggedIn()){
-    showToast('Vui lòng đăng nhập để làm nhiệm vụ.');
-    openUserAuthModal('login');
-    return;
-  }
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const cur = getCurrentUser();
-  if(getRemainingAttempts(cur, t) <= 0){
-    showToast('Bạn đã hết lượt hôm nay cho nhiệm vụ này, quay lại vào ngày mai nhé.');
-    renderTasks();
-    return;
-  }
-
-  const btn = btnEl;
-  if(btn){ btn.disabled = true; }
-
-  try{
-    let openUrl, token = null;
-    if(t.link){
-      // Link cố định do admin nhập tay: dùng nguyên, không có token riêng cho từng lượt.
-      openUrl = t.link;
-    } else {
-      token = Math.random().toString(36).slice(2) + Date.now().toString(36);
-      const longUrl = buildTaskReturnUrl(t.id, token);
-      openUrl = await shortenViaProvider(t.providerId, longUrl);
-    }
-    setTaskStartMarker(cur.username, id, token);
-    window.open(openUrl, '_blank');
-    startedTasks.add(id);
-    renderTasks();
-  }catch(e){
-    console.error(e);
-    showToast(e.message || 'Không tạo được link, thử lại nhé.');
-  }finally{
-    if(btn){ btn.disabled = false; }
-  }
-};
-window.confirmTaskDone = async function(id){
-  if(!isUserLoggedIn()){
-    showToast('Vui lòng đăng nhập để làm nhiệm vụ.');
-    openUserAuthModal('login');
-    return;
-  }
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const cur = getCurrentUser();
-  if(getRemainingAttempts(cur, t) <= 0){
-    showToast('Bạn đã hết lượt hôm nay cho nhiệm vụ này.');
-    return;
-  }
-  const ok = await askConfirm({title:'Xác nhận hoàn thành', message:`Bạn xác nhận đã vượt link và hoàn thành nhiệm vụ "${t.title}" để nhận ${t.reward||0} V-coin?`, okText:'Đã hoàn thành'});
-  if(!ok) return;
-  const marker = getTaskStartMarker(cur.username, id);
-  const result = await grantTaskReward(t, marker ? marker.token : null);
-  if(!result.ok){ showToast('Có lỗi xảy ra, thử lại nhé.'); return; }
-  clearTaskStartMarker(cur.username, id);
-  startedTasks.delete(id);
-  showToast(result.alreadyDone ? 'Bạn đã hết lượt hôm nay cho nhiệm vụ này.' : `🎉 Nhận thành công +${t.reward||0} V-coin!`);
-  renderVcoinUI();
-  renderTasks();
-};
-// Tự động cộng V-coin khi trang rút gọn đưa người dùng quay lại web qua "link quay về" (?claim=<id>&t=<token>),
-// thay vì phải bấm nút "Tôi đã hoàn thành" thủ công. Vẫn giữ nút thủ công làm phương án dự phòng
-// (một số trang rút gọn không hỗ trợ tự chuyển hướng về đích tuỳ chỉnh).
-async function autoClaimTaskFromReturn(taskId, token){
-  if(!isUserLoggedIn()){
-    savePendingClaim(taskId, token);
-    showToast('Vượt link thành công! Đăng nhập để nhận V-coin nhé.');
-    switchView('tasks');
-    openUserAuthModal('login');
-    return;
-  }
-  if(!tasksLoaded){ tasks = await loadTasks(); tasksLoaded = true; }
-  const t = tasks.find(x=>x.id===taskId);
-  if(!t){ showToast('Nhiệm vụ không tồn tại hoặc đã bị xoá.'); switchView('tasks'); return; }
-  const cur = getCurrentUser();
-  const marker = getTaskStartMarker(cur.username, taskId);
-  if(!marker){
-    showToast('Không tìm thấy phiên bắt đầu nhiệm vụ trên trình duyệt này. Vui lòng bấm "Lấy link vượt" ở tab Nhiệm vụ trước nhé.');
-    switchView('tasks');
-    renderTasks();
-    return;
-  }
-  const result = await grantTaskReward(t, token);
-  clearTaskStartMarker(cur.username, taskId);
-  startedTasks.delete(taskId);
-  if(!result.ok){
-    showToast(result.reason==='token_mismatch' ? 'Lượt này không hợp lệ (link cũ hoặc đã dùng), hãy bấm "Lấy link vượt" lại nhé.' : 'Có lỗi xảy ra khi cộng V-coin, thử lại nhé.');
-    switchView('tasks'); return;
-  }
-  showToast(result.alreadyDone ? 'Bạn đã hết lượt hôm nay cho nhiệm vụ này.' : `🎉 Chào mừng quay lại! Bạn vừa nhận được +${t.reward||0} V-coin.`);
-  renderVcoinUI();
-  renderTasks();
-  switchView('tasks');
-}
-
-document.getElementById('openAddTaskBtn').addEventListener('click', ()=>{
-  if(!checkAdmin()) return;
-  editingTaskId = null;
-  // "Giữ chỗ" 1 id ngay từ lúc mở form, để link quay về (và link rút gọn tạo tự động) đã ổn định trước khi lưu.
-  currentFormTaskId = 't'+Date.now();
-  document.getElementById('taskFormTitle').textContent = 'Thêm nhiệm vụ mới';
-  document.getElementById('tTitle').value = '';
-  document.getElementById('tDesc').value = '';
-  document.getElementById('tLink').value = '';
-  document.getElementById('tReward').value = '';
-  document.getElementById('tMaxAttempts').value = '2';
-  document.getElementById('tActive').checked = true;
-  document.getElementById('tReturnUrlPreview').value = buildTaskReturnUrl(currentFormTaskId);
-  fillTaskProviderSelect('');
-  fillSettingsFormUI();
-  renderProvidersAdminUI();
-  switchView('task-form');
-});
-document.getElementById('cancelTaskFormBtn').addEventListener('click', ()=>switchView('tasks'));
-window.startEditTask = function(id){
-  if(!checkAdmin()) return;
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  editingTaskId = id;
-  currentFormTaskId = id;
-  document.getElementById('taskFormTitle').textContent = 'Sửa nhiệm vụ';
-  document.getElementById('tTitle').value = t.title||'';
-  document.getElementById('tDesc').value = t.desc||'';
-  document.getElementById('tLink').value = t.link||'';
-  document.getElementById('tReward').value = t.reward ? String(t.reward) : '';
-  document.getElementById('tMaxAttempts').value = t.maxAttemptsPerDay ? String(t.maxAttemptsPerDay) : '2';
-  document.getElementById('tActive').checked = t.active !== false;
-  document.getElementById('tReturnUrlPreview').value = buildTaskReturnUrl(currentFormTaskId);
-  fillTaskProviderSelect(t.providerId || '');
-  fillSettingsFormUI();
-  renderProvidersAdminUI();
-  switchView('task-form');
-};
-document.getElementById('copyFormReturnUrlBtn').addEventListener('click', async ()=>{
-  const url = document.getElementById('tReturnUrlPreview').value;
-  try{ await navigator.clipboard.writeText(url); showToast('Đã copy link quay về!'); }
-  catch(e){ showToast('Không copy được, hãy bôi đen và copy thủ công trong ô.'); }
-});
-document.getElementById('autoShortenBtn').addEventListener('click', async ()=>{
-  if(!checkAdmin()) return;
-  if(!currentFormTaskId){ showToast('Có lỗi, hãy mở lại form nhiệm vụ.'); return; }
-  const providerId = document.getElementById('tProviderId').value;
-  if(!providerId){ showToast('Hãy chọn 1 nhà cung cấp ở trên trước.'); return; }
-  const btn = document.getElementById('autoShortenBtn');
-  const longUrl = buildTaskReturnUrl(currentFormTaskId);
-  btn.disabled = true;
-  const oldText = btn.textContent;
-  btn.textContent = 'Đang tạo link...';
-  try{
-    const shortUrl = await shortenViaProvider(providerId, longUrl);
-    document.getElementById('tLink').value = shortUrl;
-    showToast('Đã tạo link cố định! (Nếu để trống ô này, hệ thống sẽ tự tạo link mới qua nhà cung cấp đã chọn mỗi lượt thay vì dùng 1 link cố định.)');
-  }catch(e){
-    console.error(e);
-    showToast(e.message || 'Tạo link thất bại, thử lại nhé.');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = oldText;
-  }
-});
-window.deleteTaskAdmin = async function(id){
-  if(!checkAdmin()) return;
-  const ok = await askConfirm({title:'Xoá nhiệm vụ', message:'Xoá nhiệm vụ này? Hành động này không thể hoàn tác.', okText:'Xoá', danger:true});
-  if(!ok) return;
-  await removeTaskDoc(id);
-  tasks = tasks.filter(x=>x.id!==id);
-  renderTasks();
-  showToast('Đã xoá nhiệm vụ.');
-};
-window.toggleTaskActive = async function(id){
-  if(!checkAdmin()) return;
-  const t = tasks.find(x=>x.id===id);
-  if(!t) return;
-  const turningOn = t.active === false;
-  if(turningOn && appSettings.maxActiveTasks > 0 && countActiveTasks(t.id) >= appSettings.maxActiveTasks){
-    showToast(`Đã đạt giới hạn ${appSettings.maxActiveTasks} nhiệm vụ đang hoạt động. Hãy tắt bớt hoặc tăng giới hạn trong Cài đặt.`);
-    return;
-  }
-  t.active = turningOn ? true : false;
-  const ok = await saveTaskDoc(t);
-  if(ok){
-    renderTasks();
-    showToast(t.active ? 'Đã bật nhiệm vụ.' : 'Đã tắt nhiệm vụ.');
-  }
-};
-document.getElementById('saveTaskBtn').addEventListener('click', async ()=>{
-  if(!checkAdmin()) return;
-  const title = document.getElementById('tTitle').value.trim();
-  const desc = document.getElementById('tDesc').value.trim();
-  const link = document.getElementById('tLink').value.trim();
-  const providerId = document.getElementById('tProviderId').value || '';
-  const rewardRaw = document.getElementById('tReward').value.trim();
-  const reward = rewardRaw ? Math.max(0, parseInt(rewardRaw, 10) || 0) : 0;
-  const maxAttemptsRaw = document.getElementById('tMaxAttempts').value.trim();
-  const maxAttemptsPerDay = maxAttemptsRaw ? Math.max(1, parseInt(maxAttemptsRaw, 10) || 1) : 2;
-  const active = document.getElementById('tActive').checked;
-  if(!title){ showToast('Vui lòng nhập tên nhiệm vụ.'); return; }
-  if(!link && !providerId){
-    showToast('Hãy chọn 1 nhà cung cấp rút gọn link, hoặc nhập "Link cố định" thủ công.');
-    return;
-  }
-  if(reward <= 0){ showToast('Vui lòng nhập số V-coin thưởng lớn hơn 0.'); return; }
-  if(active && appSettings.maxActiveTasks > 0 && countActiveTasks(editingTaskId) >= appSettings.maxActiveTasks){
-    showToast(`Đã đạt giới hạn ${appSettings.maxActiveTasks} nhiệm vụ đang hoạt động. Hãy tắt bớt nhiệm vụ khác, hoặc bỏ chọn "Đang hoạt động", hoặc tăng giới hạn trong Cài đặt.`);
-    return;
-  }
-
-  const saveBtn = document.getElementById('saveTaskBtn');
-  saveBtn.disabled = true;
-
-  let taskToSave;
-  if(editingTaskId){
-    const t = tasks.find(x=>x.id===editingTaskId);
-    t.title = title; t.desc = desc; t.link = link; t.providerId = providerId; t.reward = reward; t.maxAttemptsPerDay = maxAttemptsPerDay; t.active = active;
-    taskToSave = t;
-  } else {
-    taskToSave = {id: currentFormTaskId || ('t'+Date.now()), title, desc, link, providerId, reward, maxAttemptsPerDay, active, createdAt: Date.now()};
-    tasks.push(taskToSave);
-  }
-  const ok = await saveTaskDoc(taskToSave);
-  saveBtn.disabled = false;
-  if(!ok) return;
-  renderTasks();
-  switchView('tasks');
-  showToast('Đã lưu nhiệm vụ!');
-});
-
 // ---------------- INIT ----------------
 (async function init(){
-  // Nếu URL có ?claim=<taskId>&t=<token> nghĩa là trang rút gọn (link vượt) vừa đưa người dùng quay lại đây
-  // sau khi hoàn thành nhiệm vụ -> lấy id + token ra rồi dọn URL ngay để tránh cộng lặp khi F5 lại trang.
-  const urlParams = new URLSearchParams(window.location.search);
-  const claimTaskId = urlParams.get('claim');
-  const claimToken = urlParams.get('t') || null;
-  if(claimTaskId){
-    window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
-  }
-
   // Nếu đang đăng nhập là khách hàng, đồng bộ lại số dư V-coin mới nhất từ Firestore
   // (phòng trường hợp số dư đã đổi ở phiên/thiết bị khác kể từ lần đăng nhập gần nhất).
   if(isUserLoggedIn() && !isAdminUnlocked()){
     const cur = getCurrentUser();
     const freshUser = await loadUserDoc(cur.username);
     if(freshUser){
-      setCurrentUser({username: freshUser.username, displayName: freshUser.displayName, vcoin: freshUser.vcoin||0, completedTaskIds: freshUser.completedTaskIds||[], taskAttempts: freshUser.taskAttempts||{}});
+      setCurrentUser({username: freshUser.username, displayName: freshUser.displayName, vcoin: freshUser.vcoin||0});
     }
   }
   renderAuthUI();
   updateVolumeIcon();
-  await loadSettings();
-  fillSettingsFormUI();
-  await loadProvidersPublic();
-  fillTaskProviderSelect();
   collections = await loadCollections();
   renderCollectionChipsUI();
   await renderProducts();
   await renderProfile();
   await renderPlaylistAdmin();
-  await renderTasksData();
-
-  if(claimTaskId){
-    await autoClaimTaskFromReturn(claimTaskId, claimToken);
-  }
 })();

@@ -16,7 +16,6 @@
     <div class="vcoin-badge user-only" id="vcoinBadge" title="Số dư V-coin">💰 <span id="vcoinAmount">0</span></div>
     <nav>
       <button class="tab-btn active" data-view="home">Trang chủ</button>
-      <button class="tab-btn" data-view="tasks">Nhiệm vụ</button>
       <button class="tab-btn" data-view="profile">Hồ sơ</button>
       <button class="admin-lock-btn" id="loginBtn">👤 Đăng nhập</button>
     </nav>
@@ -132,103 +131,6 @@
     </div>
   </section>
 
-  <!-- TASKS (Nhiệm vụ vượt link -> nhận V-coin) -->
-  <section class="view" id="view-tasks">
-    <div class="home-top">
-      <div class="label">Nhiệm vụ &mdash; <span id="taskCountLabel">0</span> nhiệm vụ</div>
-      <button class="add-btn admin-only" id="openAddTaskBtn">+ Thêm nhiệm vụ</button>
-    </div>
-    <p style="color:var(--muted);font-size:13.5px;margin:-6px 0 22px;max-width:620px;">
-      Vượt qua link bên dưới, làm xong trang đó sẽ tự đưa bạn quay lại đây và cộng V-coin ngay. Nếu không tự quay lại được, bấm "Tôi đã hoàn thành" để xác nhận thủ công. V-coin dùng để đổi các sản phẩm có gắn giá V-coin.
-    </p>
-    <div class="task-list" id="taskList"></div>
-  </section>
-
-  <!-- ADD/EDIT TASK -->
-  <section class="view" id="view-task-form">
-    <div class="form-card">
-      <h2 id="taskFormTitle" style="font-size:22px;">Thêm nhiệm vụ mới</h2>
-
-      <details class="admin-only" id="advancedSettingsDetails" style="margin-bottom:20px;background:rgba(0,0,0,.15);border-radius:14px;padding:4px 16px;">
-        <summary style="cursor:pointer;padding:10px 0;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.03em;color:var(--amber-soft);">⚙️ Cài đặt nâng cao (giới hạn nhiệm vụ &amp; nhà cung cấp rút gọn link)</summary>
-
-        <div style="padding-bottom:16px;">
-          <h3 style="font-size:15px;margin-top:6px;">Giới hạn nhiệm vụ</h3>
-          <label>Giới hạn số nhiệm vụ đang hoạt động cùng lúc</label>
-          <input type="text" id="stMaxActiveTasks" placeholder="0 = không giới hạn" inputmode="numeric">
-          <div class="form-actions">
-            <button type="button" class="primary-btn" id="saveTaskSettingsBtn">Lưu cài đặt</button>
-          </div>
-
-          <h3 style="font-size:15px;margin-top:22px;">🔌 Nhà cung cấp rút gọn link (Link4m, LinkTot, Layma, Uptolink...)</h3>
-          <p style="color:var(--muted);font-size:12.5px;margin:-4px 0 14px;">
-            Mỗi nhà cung cấp cần 1 "URL mẫu" gọi API của họ, chứa <code>{URL}</code> (chỗ điền link đích) và <code>{API_KEY}</code> (chỗ điền API Key, nếu có). Cuộc gọi API chạy qua Cloud Function ở server nên không bị lỗi CORS, và API Key không bao giờ lộ ra trình duyệt.
-          </p>
-          <div id="providerAdminList" style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;"></div>
-
-          <h4 id="providerFormTitle" style="font-size:14px;">Thêm nhà cung cấp mới</h4>
-          <label>Tên nhà cung cấp</label>
-          <input type="text" id="pvName" placeholder="VD: Link4m">
-          <label>URL mẫu gọi API (GET) — phải chứa {URL}, có thể chứa {API_KEY}</label>
-          <input type="text" id="pvUrlTemplate" placeholder="https://link4m.co/api-shorten/v2?api={API_KEY}&url={URL}&format=text">
-          <label>API Key (nếu nhà cung cấp yêu cầu)</label>
-          <input type="text" id="pvApiKey" placeholder="Dán API Key vào đây">
-          <label>Phương thức</label>
-          <select id="pvMethod">
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-          </select>
-          <label>Kiểu phản hồi</label>
-          <select id="pvResponseType">
-            <option value="text">Chữ thuần (trả thẳng link rút gọn)</option>
-            <option value="json">JSON</option>
-          </select>
-          <label>Đường dẫn lấy link trong JSON (chỉ cần nếu chọn kiểu JSON, VD: data.shortUrl)</label>
-          <input type="text" id="pvJsonPath" placeholder="VD: data.shortUrl hoặc shortenedUrl">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-            <input type="checkbox" id="pvEnabled" style="width:auto;" checked>
-            <span style="margin:0;">Đang bật (hiện trong danh sách chọn ở nhiệm vụ)</span>
-          </label>
-          <div class="form-actions">
-            <button type="button" class="primary-btn" id="saveProviderBtn">Lưu nhà cung cấp</button>
-            <button type="button" class="ghost-btn" id="providerFormReset">Làm mới form (thêm mới)</button>
-          </div>
-        </div>
-      </details>
-
-      <label>Tên nhiệm vụ</label>
-      <input type="text" id="tTitle" placeholder="VD: Xem trang giới thiệu nhận 50 V-coin">
-      <label>Mô tả</label>
-      <textarea id="tDesc" placeholder="Hướng dẫn ngắn cho nhiệm vụ..."></textarea>
-      <label>Nhà cung cấp rút gọn link (tự tạo link mới mỗi lượt)</label>
-      <select id="tProviderId"></select>
-      <label>Link cố định (tuỳ chọn — để trống để tự tạo qua nhà cung cấp đã chọn ở trên mỗi lượt)</label>
-      <div class="task-return-url-row">
-        <input type="url" id="tLink" placeholder="https://... (để trống nếu muốn tự động)">
-        <button type="button" class="mini-btn" id="autoShortenBtn">🔗 Tạo link cố định</button>
-      </div>
-      <div class="task-return-url" style="margin-top:6px;">
-        <span class="label" style="margin:0 0 6px;">Link quay về (đích để rút gọn)</span>
-        <div class="task-return-url-row">
-          <input type="text" id="tReturnUrlPreview" readonly value="" onclick="this.select()">
-          <button type="button" class="mini-btn" id="copyFormReturnUrlBtn">Copy</button>
-        </div>
-      </div>
-      <label>Thưởng (V-coin)</label>
-      <input type="text" id="tReward" placeholder="VD: 50" inputmode="numeric">
-      <label>Giới hạn lượt làm / ngày</label>
-      <input type="text" id="tMaxAttempts" placeholder="VD: 2 (mặc định)" inputmode="numeric" value="2">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-        <input type="checkbox" id="tActive" style="width:auto;" checked>
-        <span style="margin:0;">Đang hoạt động (hiện cho người dùng)</span>
-      </label>
-      <div class="form-actions">
-        <button class="primary-btn" id="saveTaskBtn">Lưu nhiệm vụ</button>
-        <button class="ghost-btn" id="cancelTaskFormBtn">Huỷ</button>
-      </div>
-    </div>
-  </section>
-
   <!-- PROFILE -->
   <section class="view" id="view-profile">
     <div class="dashboard-card admin-only" id="dashboardCard">
@@ -260,7 +162,7 @@
       <h3>💰 Ví V-coin của bạn</h3>
       <div class="vcoin-balance-num" id="vcoinProfileAmount">0</div>
       <div class="label" style="margin-top:2px;">V-COIN HIỆN CÓ</div>
-      <p style="color:var(--muted);font-size:13px;margin-top:10px;">Hoàn thành nhiệm vụ vượt link ở tab "Nhiệm vụ" để nhận thêm V-coin, dùng để đổi các sản phẩm có gắn giá V-coin.</p>
+      <p style="color:var(--muted);font-size:13px;margin-top:10px;">Dùng V-coin để đổi các sản phẩm có gắn giá V-coin.</p>
     </div>
 
     <div class="profile-card" id="profileView">

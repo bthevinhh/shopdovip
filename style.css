@@ -344,41 +344,6 @@ body.user-mode .user-only{display:revert !important;}
   padding:4px 10px;border-radius:50px;margin-top:6px;align-self:flex-start;
 }
 
-/* ---------- TASKS (nhiệm vụ vượt link) ---------- */
-.task-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;max-width:1100px;margin:0 auto;}
-.task-card{
-  background:var(--kraft);color:var(--text-dark);border-radius:18px;
-  padding:20px 22px;position:relative;display:flex;flex-direction:column;
-  box-shadow:0 1px 2px rgba(0,0,0,.2), 0 14px 30px -14px rgba(0,0,0,.5);
-  animation:popin .45s var(--ease) both;
-}
-.task-card.completed{opacity:.72;}
-.task-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
-.task-badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
-.task-reward-badge{
-  font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.03em;
-  background:var(--text-dark);color:var(--amber-soft);padding:5px 12px;border-radius:50px;
-}
-.task-attempts-badge{
-  font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.03em;
-  background:rgba(0,0,0,.08);color:#5a4d3a;padding:5px 12px;border-radius:50px;
-}
-.task-inactive-badge{
-  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
-  color:#a15b3f;background:rgba(232,92,65,.15);padding:4px 10px;border-radius:50px;
-}
-.task-card h3{font-size:16.5px;margin:2px 0 4px;}
-.task-desc{font-size:13px;color:#5a4d3a;line-height:1.5;}
-.task-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
-.task-actions .stamp-btn, .task-actions .ghost-btn{flex:1;min-width:140px;justify-content:center;}
-.task-return-url{margin-top:10px;padding-top:10px;border-top:1px dashed rgba(0,0,0,.15);}
-.task-return-url-row{display:flex;gap:8px;margin-top:2px;}
-.task-return-url-row input{
-  flex:1;min-width:0;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.12);
-  color:#5a4d3a;font-family:'Space Mono',monospace;font-size:11px;
-  padding:7px 10px;border-radius:8px;
-}
-.task-return-url-row input:focus{outline:none;border-color:var(--amber);}
 .admin-lock-btn{
   font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;
   background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted);
